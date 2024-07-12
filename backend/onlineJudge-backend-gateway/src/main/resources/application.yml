@@ -1,0 +1,47 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:9097
+    gateway:
+      routes:
+        - id: onlineJudge-backend-service-user
+          uri: lb://onlineJudge-backend-service-user
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - AddRequestHeader=X-Forwarded-By, Service-Gateway
+  application:
+    name: onlineJudge-backend-gateway
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+server:
+  port: 8100
+
+knife4j:
+  gateway:
+    # ① 第一个配置，开启gateway聚合组件
+    enabled: true
+    # ② 第二行配置，设置聚合模式采用discover服务发现的模式
+    strategy: discover
+    discover:
+      # ③ 第三行配置，开启discover模式
+      enabled: true
+      # ④ 第四行配置，聚合子服务全部为Swagger2规范的文档
+      version: swagger2
+      excluded-services:
+        - .*?dubbo.*
+
+dubbo:
+  application:
+    name: onlineJudge-backend-gateway
+  registry:
+    address: nacos://127.0.0.1:9097
+  protocol:
+    name: dubbo
+    port: -1
+
+logging:
+  level:
+    web: debug
