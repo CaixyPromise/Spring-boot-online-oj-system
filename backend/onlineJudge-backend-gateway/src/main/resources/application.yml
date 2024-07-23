@@ -4,6 +4,14 @@ spring:
       discovery:
         server-addr: 127.0.0.1:9097
     gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_UNIQUE
+      global-cors:
+        cors-configurations:
+          '[/**]':
+            allowedHeaders: '*'
+            allowedMethods: '*'
+            allowedOrigins: '*'
       routes:
         - id: onlineJudge-backend-service-user
           uri: lb://onlineJudge-backend-service-user
@@ -38,6 +46,9 @@ dubbo:
     name: onlineJudge-backend-gateway
   registry:
     address: nacos://127.0.0.1:9097
+    parameters:
+      namespace: f098c06f-48fc-44dd-88d8-09af7c71fb96
+      group: dubbo
   protocol:
     name: dubbo
     port: -1

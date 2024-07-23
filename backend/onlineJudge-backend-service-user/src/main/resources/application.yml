@@ -63,6 +63,9 @@ dubbo:
   registry:
     id: nacos-registry
     address: nacos://127.0.0.1:9097
+    parameters:
+      namespace: f098c06f-48fc-44dd-88d8-09af7c71fb96
+      group: dubbo
   protocol:
     name: dubbo
     port: 20881

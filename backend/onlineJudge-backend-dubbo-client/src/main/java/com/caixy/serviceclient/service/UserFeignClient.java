@@ -1,10 +1,10 @@
 package com.caixy.serviceclient.service;
 
-import com.caixy.common.common.ErrorCode;
-import com.caixy.common.constant.UserConstant;
-import com.caixy.common.exception.BusinessException;
-import models.entity.User;
-import models.enums.user.UserRoleEnum;
+import com.caixy.onlineJudge.common.exception.BusinessException;
+import com.caixy.onlineJudge.constants.code.ErrorCode;
+import com.caixy.onlineJudge.constants.common.UserConstant;
+import com.caixy.onlineJudge.models.entity.User;
+import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
 
 import javax.servlet.http.HttpServletRequest;
 
