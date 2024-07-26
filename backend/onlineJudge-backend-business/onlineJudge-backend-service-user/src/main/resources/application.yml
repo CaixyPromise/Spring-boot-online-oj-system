@@ -1,0 +1,24 @@
+server:
+  address: 0.0.0.0
+  port: 8101
+  servlet:
+    context-path: /api/user
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
+spring:
+  application:
+    name: @application.name@
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  #  配置数据源
+  servlet:
+    multipart:
+      max-file-size: 10MB
+  config:
+    import: classpath:rpc.yml,classpath:cache.yml,classpath:datasource.yml
+
+knife4j:
+  enable: true

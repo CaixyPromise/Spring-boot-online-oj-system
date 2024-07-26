@@ -34,4 +34,20 @@ public enum ErrorCode
         this.message = message;
     }
 
+    public static ErrorCode getEnumByCode(Integer code)
+    {
+        if (code == null)
+        {
+            return null;
+        }
+        for (ErrorCode errorCode : values())
+        {
+            if (code.equals(errorCode.getCode()))
+            {
+                return errorCode;
+            }
+        }
+        return null;
+    }
+
 }

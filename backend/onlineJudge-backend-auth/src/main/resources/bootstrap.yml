@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: onlineJudge-backend-auth
+  config:
+    import: classpath:config.yml
