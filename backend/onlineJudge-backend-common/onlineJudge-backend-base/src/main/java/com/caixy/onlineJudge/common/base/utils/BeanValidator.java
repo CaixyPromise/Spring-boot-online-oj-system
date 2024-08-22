@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * 参数校验器
  *
- * @Author COMPROMISE
+ * @Author CAIXYPROMISE
  * @name com.caixy.onlineJudge.common.base.utils.BeanValidator
  * @since 2024/7/26 上午1:52
  */

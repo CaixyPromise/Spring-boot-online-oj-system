@@ -1,5 +1,7 @@
 package com.caixy.onlineJudge.models.vo.user;
 
+import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
+import com.caixy.onlineJudge.models.enums.user.UserStateEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -7,11 +9,10 @@ import java.util.Date;
 
 /**
  * 用户视图（脱敏）
- *
- 
  */
 @Data
-public class UserVO implements Serializable {
+public class UserVO implements Serializable
+{
 
     /**
      * id
@@ -36,12 +37,19 @@ public class UserVO implements Serializable {
     /**
      * 用户角色：user/admin/ban
      */
-    private String userRole;
+    private UserRoleEnum userRole;
 
     /**
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 状态
+     *
+     * @see UserStateEnum
+     */
+    private UserStateEnum userActive;
 
     private static final long serialVersionUID = 1L;
 }

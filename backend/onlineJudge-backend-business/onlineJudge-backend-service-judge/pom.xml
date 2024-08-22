@@ -8,7 +8,7 @@
     <description>onlineJudge-backend-service-judge</description>
     <parent>
         <groupId>com.caixy</groupId>
-        <artifactId>onlineJudge-backend-root</artifactId>
+        <artifactId>onlineJudge-backend-business</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <properties>

@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author https://github.com/caixy
  */
-@Configuration
-@MapperScan("com.caixy.user_service.mapper")
+//@Configuration
+//@MapperScan("com.caixy.onlineJudge.business.user.mapper")
 public class MyBatisPlusConfig
 {
 
@@ -24,16 +24,16 @@ public class MyBatisPlusConfig
      *
      * @return
      */
-    @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor()
-    {
-        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 分页插件
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
-        //乐观锁插件
-        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
-        //防全表更新与删除插件
-        interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
-        return interceptor;
-    }
+//    @Bean
+//    public MybatisPlusInterceptor mybatisPlusInterceptor()
+//    {
+//        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+//        // 分页插件
+//        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+//        //乐观锁插件
+//        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
+//        //防全表更新与删除插件
+//        interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
+//        return interceptor;
+//    }
 }

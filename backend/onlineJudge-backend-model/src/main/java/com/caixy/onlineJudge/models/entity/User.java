@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -16,6 +19,9 @@ import java.util.Date;
  */
 @TableName(value = "user")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User implements Serializable
 {
     /**
@@ -40,6 +46,16 @@ public class User implements Serializable
     private String unionId;
 
     /**
+     * github用户Id
+     */
+    private Long githubId;
+
+    /**
+     * github用户名
+     */
+    private String githubUserName;
+
+    /**
      * 用户手机号(后期允许拓展区号和国际号码）
      */
     private String userPhone;
@@ -60,6 +76,11 @@ public class User implements Serializable
     private String userName;
 
     /**
+     * 用户性别
+     */
+    private Integer userGender;
+
+    /**
      * 用户头像
      */
     private String userAvatar;
@@ -70,14 +91,14 @@ public class User implements Serializable
     private String userProfile;
 
     /**
-     * 用户性别
-     */
-    private Integer userGender;
-
-    /**
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 用户状态
+     */
+    private Integer userActive;
 
     /**
      * 创建时间

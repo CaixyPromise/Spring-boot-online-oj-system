@@ -5,7 +5,7 @@ import lombok.Getter;
 /**
  * Redis缓存Key配置
  *
- * @Author COMPROMISE
+ * @Author CAIXYPROMISE
  * @name com.caixy.oj.models.enums.redis.RedisKeyEnum
  * @since 2024/7/23 上午12:24
  */
@@ -18,6 +18,11 @@ public enum RedisKeyEnum
      * 验证码缓存，5分钟
      */
     CAPTCHA_CODE("captcha:", 60L * 5),
+
+    /**
+     * github OAuth验证信息缓存，5分钟
+     */
+    GITHUB_OAUTH("github_oauth:", 60L * 5),
     ;
 
     private final String key;
@@ -25,7 +30,7 @@ public enum RedisKeyEnum
 
     RedisKeyEnum(String key, Long expire)
     {
-        this.key = key;
+        this.key = key.endsWith(":") ? key : key + ":";
         this.expire = expire;
     }
 

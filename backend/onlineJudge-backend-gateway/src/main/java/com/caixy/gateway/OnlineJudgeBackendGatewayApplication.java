@@ -16,10 +16,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 @EnableDubbo
 public class OnlineJudgeBackendGatewayApplication
 {
-
     public static void main(String[] args)
     {
         SpringApplication.run(OnlineJudgeBackendGatewayApplication.class, args);
     }
-
 }

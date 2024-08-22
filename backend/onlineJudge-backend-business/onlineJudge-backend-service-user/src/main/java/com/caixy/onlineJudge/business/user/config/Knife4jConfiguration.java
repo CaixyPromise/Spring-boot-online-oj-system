@@ -21,7 +21,7 @@ public class Knife4jConfiguration {
         return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo())
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.caixy.user_service"))
+                .apis(RequestHandlerSelectors.basePackage("com.caixy.onlineJudge.business.user"))
                 .paths(PathSelectors.any())
                 .build();
     }

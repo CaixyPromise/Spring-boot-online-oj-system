@@ -16,11 +16,11 @@ import com.caixy.onlineJudge.common.encrypt.EncryptionUtils;
 import com.caixy.onlineJudge.business.user.service.UserService;
 import com.caixy.onlineJudge.business.user.mapper.UserMapper;
 import com.caixy.onlineJudge.common.base.utils.SqlUtils;
+import com.caixy.onlineJudge.models.convertor.user.UserConvertor;
+import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
+import com.caixy.onlineJudge.models.dto.user.*;
+import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 import lombok.extern.slf4j.Slf4j;
-import com.caixy.onlineJudge.models.dto.user.UserLoginRequest;
-import com.caixy.onlineJudge.models.dto.user.UserModifyPasswordRequest;
-import com.caixy.onlineJudge.models.dto.user.UserQueryRequest;
-import com.caixy.onlineJudge.models.dto.user.UserRegisterRequest;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.enums.user.UserGenderEnum;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
@@ -41,8 +41,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-        implements UserService
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService
 {
 
     @Override
@@ -120,6 +119,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @return
      */
     @Override
+    @Deprecated
     public User getLoginUser(HttpServletRequest request)
     {
         // 先判断是否已登录
@@ -428,6 +428,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     {
         return this.listByIds(ids).stream()
                 .collect(Collectors.toMap(User::getId, User::getUserName));
+    }
+
+    @Override
+    public UserOperatorResponse doAuthLogin(OAuthResultDTO resultResponse)
+    {
+        if (!resultResponse.isSuccess())
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证失败");
+        }
+        UserLoginByOAuthAdapter loginAdapter = resultResponse.getLoginAdapter();
+        User oauthUserInfo = loginAdapter.getUserInfo();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(loginAdapter.getUniqueFieldName(), loginAdapter.getUniqueFieldValue());
+        User userInfo = this.getOne(queryWrapper);
+        log.info("查询到登录用户信息: {}", userInfo);
+        // 如果未查询到，注册该用户
+        boolean isRegister = userInfo == null;
+        if (isRegister)
+        {
+            userInfo = new User();
+            UserConvertor.INSTANCE.copyAllPropertiesIgnoringId(oauthUserInfo, userInfo);
+        }
+        else {
+            userInfo = UserConvertor.INSTANCE.copyPropertiesWithStrategy(
+                    oauthUserInfo,
+                    userInfo,
+                    new HashSet<>(Arrays.asList("id", "userPassword", "createTime", "updateTime", "isDelete", "userRole")),
+                    ((sourceValue, targetValue) -> sourceValue != null && targetValue == null));
+
+        }
+        userInfo.setUserRole(UserRoleEnum.USER.getValue());
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        boolean result = isRegister ? this.save(userInfo) : this.updateById(userInfo);
+        if (!result) {
+            log.warn("用户信息操作失败: {}, 方法: {}", userInfo, isRegister ? "注册" : "登录");
+            userOperatorResponse.setCode(ErrorCode.OPERATION_ERROR.getCode());
+        }
+        else {
+            userOperatorResponse.setCode(ErrorCode.SUCCESS.getCode());
+            UserVO convertedVo = UserConvertor.INSTANCE.convert(userInfo);
+            userOperatorResponse.setData(convertedVo);
+        }
+        return userOperatorResponse;
     }
 }
 

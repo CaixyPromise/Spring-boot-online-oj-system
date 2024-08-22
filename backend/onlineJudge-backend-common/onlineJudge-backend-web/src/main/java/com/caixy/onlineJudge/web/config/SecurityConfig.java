@@ -1,4 +1,4 @@
-package com.caixy.onlineJudge.business.user.config;
+package com.caixy.onlineJudge.web.config;
 
 import com.caixy.onlineJudge.constants.common.CommonConstants;
 import org.apache.commons.lang3.StringUtils;

@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Rpc 配置
  *
- * @author hollis
+ * @author CAIXYPROMISE
  */
 @EnableDubbo
 @Configuration

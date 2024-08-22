@@ -6,11 +6,10 @@ import java.io.Serializable;
 
 /**
  * 用户更新个人信息请求
- *
- 
  */
 @Data
-public class UserUpdateMyRequest implements Serializable {
+public class UserUpdateMyRequest implements Serializable
+{
 
     /**
      * 用户昵称
@@ -31,7 +30,7 @@ public class UserUpdateMyRequest implements Serializable {
      * 用户性别
      */
     private Integer userGender;
-    
+
 
     private static final long serialVersionUID = 1L;
 }

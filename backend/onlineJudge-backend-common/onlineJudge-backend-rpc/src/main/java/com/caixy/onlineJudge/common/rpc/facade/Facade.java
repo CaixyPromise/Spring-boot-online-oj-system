@@ -1,6 +1,6 @@
 package com.caixy.onlineJudge.common.rpc.facade;
 /**
- * @author Hollis
+ * @author CAIXYPROMISE
  */
 public @interface Facade {
 }

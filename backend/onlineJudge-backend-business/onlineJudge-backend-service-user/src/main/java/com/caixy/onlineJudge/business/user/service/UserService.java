@@ -2,13 +2,12 @@ package com.caixy.onlineJudge.business.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caixy.onlineJudge.models.dto.user.UserLoginRequest;
-import com.caixy.onlineJudge.models.dto.user.UserModifyPasswordRequest;
-import com.caixy.onlineJudge.models.dto.user.UserQueryRequest;
-import com.caixy.onlineJudge.models.dto.user.UserRegisterRequest;
+import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
+import com.caixy.onlineJudge.models.dto.user.*;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.vo.user.LoginUserVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
+import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
@@ -119,4 +118,6 @@ public interface UserService extends IService<User>
     void validUserInfo(User user, boolean add);
 
     Map<Long, String> getUserNameByIds(Collection<Long> ids);
+
+    UserOperatorResponse doAuthLogin(OAuthResultDTO oAuthResultDTO);
 }

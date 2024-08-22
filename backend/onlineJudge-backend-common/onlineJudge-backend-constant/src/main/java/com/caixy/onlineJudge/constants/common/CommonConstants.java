@@ -3,7 +3,7 @@ package com.caixy.onlineJudge.constants.common;
 /**
  * 通用常量接口配置
  *
- * @Author COMPROMISE
+ * @Author CAIXYPROMISE
  * @name com.caixy.onlineJudge.constants.common.CommonConstants
  * @since 2024/7/22 下午9:20
  */
@@ -27,4 +27,8 @@ public interface CommonConstants
     String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     String HEADER_SERVICE_GATEWAY_VALUE = "Service-Gateway";
+
+    String CAPTCHA_SIGN = "captcha_sign";
+    String FRONTED_URL = "http://localhost:8000";
+
 }

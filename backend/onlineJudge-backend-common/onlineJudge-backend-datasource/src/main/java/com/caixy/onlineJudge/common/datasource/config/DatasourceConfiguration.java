@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 数据源配置类
  *
- * @Author COMPROMISE
+ * @Author CAIXYPROMISE
  * @name com.caixy.onlineJudge.common.datasource.config.DatasourceConfiguration
  * @since 2024/7/26 下午7:17
  */
