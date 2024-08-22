@@ -3,6 +3,7 @@ package com.caixy.onlineJudge.common.response;
 
 import com.caixy.onlineJudge.constants.code.ErrorCode;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -12,8 +13,10 @@ import java.io.Serializable;
  * @param <T>
  */
 @Data
+@NoArgsConstructor
 public class BaseResponse<T> implements Serializable
 {
+    private static final long serialVersionUID = 1L;
 
     private int code;
 
@@ -21,12 +24,25 @@ public class BaseResponse<T> implements Serializable
 
     private String message;
 
+    public Boolean isSucceed()
+    {
+        return code == 0;
+    }
+
     public BaseResponse(int code, T data, String message)
     {
         this.code = code;
         this.data = data;
         this.message = message;
     }
+
+    public BaseResponse(ErrorCode errorCode, T data)
+    {
+        this.code = errorCode.getCode();
+        this.data = data;
+        this.message = errorCode.getMessage();
+    }
+
 
     public BaseResponse(int code, T data)
     {
