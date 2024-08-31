@@ -1,0 +1,19 @@
+
+spring:
+  mail:
+    host: smtp.163.com
+    username: this_is_syuyangowo@163.com
+    password: JOELKKXDXPUMYJOX
+    defaultEncoding: UTF-8
+    port: 465
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            enable: true
+          stattls:
+            require: true

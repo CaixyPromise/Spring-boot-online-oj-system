@@ -14,13 +14,14 @@ import com.caixy.onlineJudge.constants.common.CommonConstants;
 import com.caixy.onlineJudge.models.enums.redis.RedisKeyEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -48,7 +49,8 @@ public class CaptchaFactory
     public void initActionService()
     {
         serviceCache =
-                SpringContextUtils.getServiceFromAnnotation(captchaGenerationStrategies, CaptchaTypeTarget.class,
+                SpringContextUtils.getServiceFromAnnotation(captchaGenerationStrategies,
+                        CaptchaTypeTarget.class,
                         "value");
         registeredStrategies = new ArrayList<>(serviceCache.values());
     }

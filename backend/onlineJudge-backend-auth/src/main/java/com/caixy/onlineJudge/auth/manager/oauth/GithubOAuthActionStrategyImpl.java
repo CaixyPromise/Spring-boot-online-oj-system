@@ -76,7 +76,7 @@ public class GithubOAuthActionStrategyImpl extends OAuth2ActionStrategy<
     @Override
     public GithubCallbackResponse doCallback(GithubCallbackRequest callbackRequest)
     {
-        HashMap<String, Object> authorizationMap = redisUtils.getHashMap(RedisKeyEnum.GITHUB_OAUTH, String.class,
+        Map<String, Object> authorizationMap = redisUtils.getHashMap(RedisKeyEnum.GITHUB_OAUTH, String.class,
                 Object.class,
                 callbackRequest.getSessionId());
         if (authorizationMap == null)
@@ -133,11 +133,9 @@ public class GithubOAuthActionStrategyImpl extends OAuth2ActionStrategy<
         userBuilder.userEmail(userProfileDTO.getEmail())
                    .githubId(userProfileDTO.getId())
                    .userAvatar(userProfileDTO.getAvatarUrl())
-                   .githubUserName(userProfileDTO.getLoginUserName())
                    .userGender(UserGenderEnum.UNKNOWN.getValue())
-                   .userAccount(userProfileDTO.getLoginUserName())
                    .userRole(UserRoleEnum.USER.getValue())
-                   .userName(userProfileDTO.getName());
+                   .nickName(userProfileDTO.getName());
 
         adapterBuilder.uniqueFieldName("githubId")
                       .uniqueFieldValue(userProfileDTO.getId())

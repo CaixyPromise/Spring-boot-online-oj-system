@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @name: com.caixy.serviceclient.service.user.response.UserQueryResponse
  * @author: CAIXYPROMISE
  * @since: 2024-02-07 00:16
@@ -18,6 +17,7 @@ import lombok.ToString;
 @ToString
 public class UserQueryResponse<T> extends BaseResponse<T>
 {
+
     public UserQueryResponse(ErrorCode errorCode, T data)
     {
         super(errorCode, data);

@@ -21,7 +21,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserOperatorResponse extends BaseResponse<UserVO>
 {
-
     public UserOperatorResponse(UserVO usrInfo)
     {
         super(ErrorCode.SUCCESS, usrInfo);
@@ -31,5 +30,4 @@ public class UserOperatorResponse extends BaseResponse<UserVO>
     {
         super(errorCode.getCode(), userInfo, message);
     }
-
 }

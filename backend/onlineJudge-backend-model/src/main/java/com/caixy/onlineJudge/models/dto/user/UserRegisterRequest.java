@@ -11,19 +11,6 @@ import java.io.Serializable;
 public class UserRegisterRequest implements Serializable
 {
     /**
-     * 用户昵称
-     */
-    private String userName;
-    /**
-     * 用户手机号(后期允许拓展区号和国际号码）
-     */
-    private String userPhone;
-    /**
-     * 用户账号
-     */
-    private String userAccount;
-
-    /**
      * 用户密码
      */
     private String userPassword;
@@ -32,7 +19,6 @@ public class UserRegisterRequest implements Serializable
      * 用户邮箱
      */
     private String userEmail;
-
 
     /**
      * 确认密码

@@ -22,9 +22,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
         exclude = {DataSourceAutoConfiguration.class})
 @EnableDubbo
 @EnableDiscoveryClient
-//@BusinessApplication(
-//    scanBasePackages = {"com.caixy.onlineJudge.business.captcha"},
-//    exclude = {DataSourceAutoConfiguration.class})
 public class OnlineJudgeCaptchaServiceApplication
 {
     public static void main(String[] args)

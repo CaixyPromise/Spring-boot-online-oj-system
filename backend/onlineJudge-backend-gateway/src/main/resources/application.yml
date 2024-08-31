@@ -1,8 +1,5 @@
 spring:
   cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:9097
     gateway:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_UNIQUE
@@ -19,11 +16,27 @@ spring:
             - Path=/api/user/**
           filters:
             - AddRequestHeader=X-Forwarded-By, Service-Gateway
+        - id: onlineJudge-backend-auth
+          uri: lb://onlineJudge-backend-auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - AddRequestHeader=X-Forwarded-By, Service-Gateway
+        - id: onlineJudge-backend-service-captcha
+          uri: lb://onlineJudge-backend-service-captcha
+          predicates:
+            - Path=/api/captcha/**
+          filters:
+            - AddRequestHeader=X-Forwarded-By, Service-Gateway
   application:
-    name: onlineJudge-backend-gateway
+    name: @application.name@
+  config:
+    import: classpath:rpc.yml,classpath:config.yml
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
+  profiles:
+    active: dev
 server:
   port: 8100
 
@@ -40,19 +53,10 @@ knife4j:
       version: swagger2
       excluded-services:
         - .*?dubbo.*
-
-dubbo:
-  application:
-    name: onlineJudge-backend-gateway
-  registry:
-    address: nacos://127.0.0.1:9097
-    parameters:
-      namespace: f098c06f-48fc-44dd-88d8-09af7c71fb96
-      group: dubbo
-  protocol:
-    name: dubbo
-    port: -1
-
 logging:
   level:
-    web: debug
+    org.springframework.cloud.gateway: debug
+    org.springframework.http.server.reactive: debug
+    org.springframework.web.reactive: debug
+#    reactor.netty: debug
+    com.github.xiaoymin.knife4j: debug

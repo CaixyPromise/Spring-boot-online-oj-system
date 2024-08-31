@@ -12,7 +12,9 @@ import com.caixy.onlineJudge.models.entity.User;
  */
 public interface UserMapper extends BaseMapper<User>
 {
+    User findByNickname(String nickname);
 
+    User findByEmail(String userEmail);
 }
 
 

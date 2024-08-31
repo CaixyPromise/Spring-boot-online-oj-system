@@ -1,7 +1,7 @@
 package com.caixy.serviceclient.service.user;
 
+import com.caixy.onlineJudge.models.dto.email.EmailRegisterRequest;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
-import com.caixy.onlineJudge.models.dto.user.*;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 import com.caixy.serviceclient.service.user.response.UserQueryResponse;
@@ -16,31 +16,20 @@ import com.caixy.serviceclient.service.user.response.UserQueryResponse;
 public interface UserFacadeService
 {
     UserOperatorResponse doOAuthLogin(OAuthResultDTO oAuthResultDTO);
-
-    /**
-     * 用户登录
-     * @param userLoginRequest
-     */
-    UserOperatorResponse login(UserLoginRequest userLoginRequest);
-
     /**
      * 用户注册
-     * @param userRegisterRequest
+     *
+     * @param emailRegisterRequest
      * @return
      */
-    UserOperatorResponse register(UserRegisterRequest userRegisterRequest);
-
-    /**
-     * 用户信息修改
-     * @param userModifyRequest
-     * @return
-     */
-    UserOperatorResponse modify(UserUpdateMyRequest userModifyRequest);
+    UserOperatorResponse register(EmailRegisterRequest emailRegisterRequest);
 
     /**
      * 用户信息查询
-     * @param userLoginRequest
-     * @return
+     *
+     * @param email@return
      */
-    UserQueryResponse<UserVO> query(UserQueryRequest userLoginRequest);
+    UserQueryResponse<UserVO> queryByEmail(String email);
+
+    UserQueryResponse<UserVO> queryByEmailAndPass(String email, String password);
 }

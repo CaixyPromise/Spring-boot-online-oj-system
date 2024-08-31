@@ -55,7 +55,7 @@ public interface UserConvertor extends BaseConvertor<User>
     }
 
     @Mapping(source = "userRole", target = "userRole", qualifiedByName = "roleStringToEnum")
-    @Mapping(source = "userActive", target = "userActive", qualifiedByName = "activeStringToEnum")
+    @Mapping(source = "isActive", target = "userActive", qualifiedByName = "activeStringToEnum")
     UserVO convert(User userInfo);
 
     @Named("roleStringToEnum")

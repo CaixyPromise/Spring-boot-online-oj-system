@@ -27,5 +27,20 @@
             <artifactId>onlineJudge-backend-exception</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.caixy</groupId>
+            <artifactId>onlineJudge-backend-rabbit-mq</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.caixy</groupId>
+            <artifactId>onlineJudge-backend-model</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.caixy</groupId>
+            <artifactId>onlineJudge-backend-regex</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

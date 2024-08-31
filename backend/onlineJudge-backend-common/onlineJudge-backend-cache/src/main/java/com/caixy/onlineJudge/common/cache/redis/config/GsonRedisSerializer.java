@@ -25,6 +25,8 @@ public class GsonRedisSerializer<T> implements RedisSerializer<T>
     {
         this.type = type;
         this.gson = new GsonBuilder()
+                .registerTypeAdapter(Integer.class, (JsonSerializer<Integer>) (src, typeOfSrc, context) -> new JsonPrimitive(src))
+                .registerTypeAdapter(Integer.TYPE, (JsonSerializer<Integer>) (src, typeOfSrc, context) -> new JsonPrimitive(src))
                 .registerTypeAdapter(Long.class, (JsonSerializer<Long>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
                 .registerTypeAdapter(Long.TYPE, (JsonSerializer<Long>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
                 .create();

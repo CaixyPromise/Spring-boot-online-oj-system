@@ -1,8 +1,11 @@
 package com.caixy.onlineJudge.common.cache.redis.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +25,13 @@ public class RedisSerializerConfig
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        // 使用自定义的 GsonRedisSerializer
-        GsonRedisSerializer<Object> serializer = new GsonRedisSerializer<>(Object.class);
+        // 使用 Jackson 作为序列化器
+        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        objectMapper.registerModule(module);
+        serializer.setObjectMapper(objectMapper);
+
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
         return template;

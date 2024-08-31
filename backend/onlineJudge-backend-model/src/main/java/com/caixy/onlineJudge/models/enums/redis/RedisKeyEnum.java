@@ -23,6 +23,8 @@ public enum RedisKeyEnum
      * github OAuth验证信息缓存，5分钟
      */
     GITHUB_OAUTH("github_oauth:", 60L * 5),
+
+    EMAIL_CAPTCHA("email:", 60L * 5)
     ;
 
     private final String key;

@@ -30,6 +30,11 @@ public class JsonUtils
         return gson.fromJson(new String(bytes, charsets), objectType);
     }
 
+    public static <T> T mapToObject(Object map, Class<T> clazz)
+    {
+        return gson.fromJson(gson.toJson(map), clazz);
+    }
+
 
     /**
      * 将 JSON 字符串转换为 Map

@@ -1,0 +1,38 @@
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      direct:
+        acknowledge-mode: manual
+
+#rabbitmq:
+#  exchanges:
+#    - name: orderDelayExchange
+#      type: delay
+#      delayedType: direct
+#      durable: true
+#      autoDelete: false
+#      bindings:
+#        - queue: orderDelayAttachmentQueue
+#          routingKey: order.attachment
+#          deadLetterRoutingKey: dl.order.attachment
+#          deadLetterQueue: X-DeadLetter-Attachment-Queue
+#          delayTime: 10000 # 10秒
+#          durable: true
+#          autoDelete: false
+#          exclusive: false
+#    - name: orderInfoExchange
+#      type: direct
+#      durable: true
+#      auto-delete: false
+#      bindings:
+#        - queue: orderSaveQueue
+#          routingKey: order.save
+#          deadLetterRoutingKey: dl.order.save
+#          deadLetterQueue: X-DeadLetter-Save-Queue
+#          durable: true
+#          autoDelete: false
+#          exclusive: false

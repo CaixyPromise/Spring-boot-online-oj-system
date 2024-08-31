@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: @application.name@
+  config:
+    import: classpath:rpc.yml,classpath:cache.yml,classpath:email.yml,classpath:rabbitmq.yml
+
+server:
+  port: 8083
+  servlet:
+    context-path: /api/captcha
+
+dubbo:
+  application:
+    qos-port: 9992
+
+knife4j:
+  enable: true
+
+logging:
+  level:
+    org.springframework.web: debug
+
+rabbitmq:
+  exchanges:
+    - name: emailExchange
+      type: direct
+      durable: true
+      autoDelete: false
+      bindings:
+        - queue: emailCaptchaQueue
+          routingKey: email.captcha
+          deadLetterRoutingKey: dl.email.captcha
+          deadLetterQueue: X-DeadLetter-Email-Captcha-Queue
+          durable: true
+          autoDelete: false
+          exclusive: false

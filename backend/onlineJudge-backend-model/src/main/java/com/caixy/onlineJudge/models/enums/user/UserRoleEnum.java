@@ -21,7 +21,6 @@ public enum UserRoleEnum
     ADMIN("管理员", "admin", 0),
 
     USER("用户", "user", 1),
-    TEACHER("教师", "teacher", 2),
 
     BAN("被封号", "ban", -999);
 

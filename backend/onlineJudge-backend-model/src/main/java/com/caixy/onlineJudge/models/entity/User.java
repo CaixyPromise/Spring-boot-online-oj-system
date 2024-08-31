@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.toolkit.EncryptUtils;
+import com.caixy.onlineJudge.models.enums.user.UserGenderEnum;
+import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
+import com.caixy.onlineJudge.models.enums.user.UserStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,34 +35,9 @@ public class User implements Serializable
     private Long id;
 
     /**
-     * 账号
+     * 用户昵称
      */
-    private String userAccount;
-
-    /**
-     * 密码
-     */
-    private String userPassword;
-
-    /**
-     * 微信开放平台id
-     */
-    private String unionId;
-
-    /**
-     * github用户Id
-     */
-    private Long githubId;
-
-    /**
-     * github用户名
-     */
-    private String githubUserName;
-
-    /**
-     * 用户手机号(后期允许拓展区号和国际号码）
-     */
-    private String userPhone;
+    private String nickName;
 
     /**
      * 用户邮箱
@@ -66,14 +45,34 @@ public class User implements Serializable
     private String userEmail;
 
     /**
+     * 密码
+     */
+    private String userPassword;
+
+    /**
+     * github用户Id
+     */
+    private Long githubId;
+
+    /**
+     * 用户角色：user/admin
+     */
+    private String userRole;
+
+    /**
+     * 微信开放平台id
+     */
+    private String unionId;
+
+    /**
+     * 用户手机号(后期允许拓展区号和国际号码）
+     */
+    private String userPhone;
+
+    /**
      * 公众号openId
      */
     private String mpOpenId;
-
-    /**
-     * 用户昵称
-     */
-    private String userName;
 
     /**
      * 用户性别
@@ -86,21 +85,6 @@ public class User implements Serializable
     private String userAvatar;
 
     /**
-     * 用户简介
-     */
-    private String userProfile;
-
-    /**
-     * 用户角色：user/admin/ban
-     */
-    private String userRole;
-
-    /**
-     * 用户状态
-     */
-    private Integer userActive;
-
-    /**
      * 创建时间
      */
     private Date createTime;
@@ -111,10 +95,31 @@ public class User implements Serializable
     private Date updateTime;
 
     /**
+     * 是否激活
+     */
+    private Integer isActive;
+
+    /**
      * 是否删除
      */
     private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public static User registerUserByEmail(
+            String nickName,
+            String userEmail,
+            String userPassword)
+    {
+        return User.builder()
+                .nickName(nickName)
+                .userEmail(userEmail)
+                .userPassword(userPassword)
+                .userGender(UserGenderEnum.UNKNOWN.getValue())
+                .userRole(UserRoleEnum.USER.getValue())
+                .isActive(UserStateEnum.ACTIVE.getCode())
+                .isDelete(0)
+                .build();
+    }
 }

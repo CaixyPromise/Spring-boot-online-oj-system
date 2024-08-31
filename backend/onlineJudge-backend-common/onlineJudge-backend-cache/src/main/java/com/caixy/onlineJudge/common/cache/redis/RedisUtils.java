@@ -27,25 +27,9 @@ public class RedisUtils
 {
     // 调用接口排名信息的最大容量
     private static final Long REDIS_INVOKE_RANK_MAX_SIZE = 10L;
-    // 分布式锁基础定义Key
-    private static final String REDIS_LOCK_KEY = "REDIS_LOCK:";
-
-    // 分布式锁定义过期时间
-    private static final Long REDIS_LOCK_EXPIRE = 5L;
-    // 分布式锁最大重试次数
-    private static final int MAX_RETRY_TIMES = 10;
-    /**
-     * 无限重试次数
-     */
-    public static final Long UNLIMITED_RETRY_TIMES = -1L;
-
-    // 分布式锁重试间隔时间（毫秒）
-    private static final Long RETRY_INTERVAL = 100L;
-
-    // 分布式调用统计排行榜插入锁Key
-    private static final String REDIS_INVOKE_RANK_LOCK_KEY = REDIS_LOCK_KEY + "REDIS_INVOKE_RANK_LOCK:";
 
     private final StringRedisTemplate stringRedisTemplate;
+
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -95,9 +79,9 @@ public class RedisUtils
      * @version 2.0
      * @since 2024/2/16 20:19
      */
-    public boolean delete(RedisKeyEnum Enum, String... items)
+    public boolean delete(RedisKeyEnum Enum, String... keyItems)
     {
-        return Boolean.TRUE.equals(stringRedisTemplate.delete(Enum.generateKey(items)));
+        return Boolean.TRUE.equals(stringRedisTemplate.delete(Enum.generateKey(keyItems)));
     }
 
     /**
@@ -107,9 +91,9 @@ public class RedisUtils
      * @version 2.0
      * @since 2024/2/16 20:19
      */
-    public void refreshExpire(RedisKeyEnum Enum, long expire, String... items)
+    public void refreshExpire(RedisKeyEnum Enum, long expire, String... keyItems)
     {
-        stringRedisTemplate.expire(Enum.generateKey(items), expire, TimeUnit.SECONDS);
+        refreshExpire(Enum.generateKey(keyItems), expire);
     }
 
     /**
@@ -131,9 +115,9 @@ public class RedisUtils
      * @version 1.0
      * @since 2023/1220 20:18
      */
-    public String getString(RedisKeyEnum Enum, String... items)
+    public String getString(RedisKeyEnum Enum, String... keyItems)
     {
-        return stringRedisTemplate.opsForValue().get(Enum.generateKey(items));
+        return stringRedisTemplate.opsForValue().get(Enum.generateKey(keyItems));
     }
 
     /**
@@ -148,9 +132,9 @@ public class RedisUtils
         return stringRedisTemplate.opsForValue().get(key);
     }
 
-    public <JsonType> List<JsonType> getJson(RedisKeyEnum keyEnum, String... items)
+    public <JsonType> List<JsonType> getJson(RedisKeyEnum keyEnum, String... keyItems)
     {
-        String cacheData = stringRedisTemplate.opsForValue().get(keyEnum.generateKey(items));
+        String cacheData = stringRedisTemplate.opsForValue().get(keyEnum.generateKey(keyItems));
         if (StringUtils.isNotBlank(cacheData))
         {
             // 把字符串转义全部清楚掉
@@ -160,9 +144,9 @@ public class RedisUtils
         return null;
     }
 
-    public <JsonType> JsonType getJson(RedisKeyEnum keyEnum, Class<JsonType> returnType, String... items)
+    public <JsonType> JsonType getJson(RedisKeyEnum keyEnum, Class<JsonType> returnType, String... keyItems)
     {
-        String cacheData = stringRedisTemplate.opsForValue().get(keyEnum.generateKey(items));
+        String cacheData = stringRedisTemplate.opsForValue().get(keyEnum.generateKey(keyItems));
         if (StringUtils.isNotBlank(cacheData))
         {
             return JsonUtils.jsonToObject(cacheData, returnType);
@@ -177,9 +161,9 @@ public class RedisUtils
      * @version 1.0
      * @since 2024/6/16 上午10:32
      */
-    public void setObject(RedisKeyEnum keyEnum, Object value, String... items)
+    public void setObject(RedisKeyEnum keyEnum, Object value, String... keyItems)
     {
-        setString(keyEnum, JsonUtils.toJsonString(value), items);
+        setString(keyEnum, JsonUtils.toJsonString(value), keyItems);
     }
 
     /**
@@ -189,9 +173,9 @@ public class RedisUtils
      * @version 1.0
      * @since 2024/7/2 下午9:18
      */
-    public <T> T getObject(RedisKeyEnum keyEnum, Class<T> returnType, String... items)
+    public <T> T getObject(RedisKeyEnum keyEnum, Class<T> returnType, String... keyItems)
     {
-        return getJson(keyEnum, returnType, items);
+        return getJson(keyEnum, returnType, keyItems);
     }
 
 
@@ -202,9 +186,9 @@ public class RedisUtils
      * @version 1.0
      * @since 2023/1220 20:18
      */
-    public Map<Object, Object> getHashMap(RedisKeyEnum Enum, String... items)
+    public Map<Object, Object> getHashMap(RedisKeyEnum Enum, String... keyItems)
     {
-        return stringRedisTemplate.opsForHash().entries(Enum.generateKey(items));
+        return stringRedisTemplate.opsForHash().entries(Enum.generateKey(keyItems));
     }
 
 
@@ -212,21 +196,22 @@ public class RedisUtils
      * 获取hash数据，接受常量配置，并且根据类型回传对应类型的HashMap
      *
      * @param enumKey   key常量
-     * @param items     key名称
+     * @param keyItems  key名称
      * @param keyType   key类型
      * @param valueType value类型
      * @author CAIXYPROMISE
      * @version 1.0
      * @since 2024/2/24 00:16
      */
-    public <K, V> HashMap<K, V> getHashMap(RedisKeyEnum enumKey,
-                                           Class<K> keyType,
-                                           Class<V> valueType,
-                                           String items
-    )
+    public <K, V> Map<K, V> getHashMap(RedisKeyEnum keyEnum, Class<K> keyType, Class<V> valueType, String... keyItems)
     {
-        Map<Object, Object> rawMap = stringRedisTemplate.opsForHash().entries(enumKey.generateKey(items));
-        HashMap<K, V> typedMap = new HashMap<>();
+        String fullKey = keyEnum.generateKey(keyItems);
+        Map<Object, Object> rawMap = redisTemplate.opsForHash().entries(fullKey);
+        if (rawMap.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+        Map<K, V> typedMap = new HashMap<>();
         rawMap.forEach((rawKey, rawValue) ->
         {
             K key = keyType.cast(rawKey);
@@ -244,14 +229,14 @@ public class RedisUtils
      * @version 1.0
      * @since 2023/12/20 2:16
      */
-    public <Key, Value> void setHashMap(RedisKeyEnum Enum, Map<Key, Value> data, String... item)
+    public <K, V> void setHashMap(RedisKeyEnum keyEnum, Map<K, V> data, String... keyItems)
     {
-        Long expire = Enum.getExpire();
-        String fullKey = Enum.generateKey(item);
-        stringRedisTemplate.opsForHash().putAll(fullKey, data);
+        String fullKey = keyEnum.generateKey(keyItems);
+        redisTemplate.opsForHash().putAll(fullKey, data);
+        Long expire = keyEnum.getExpire();
         if (expire != null)
         {
-            refreshExpire(fullKey, expire);
+            redisTemplate.expire(fullKey, expire, TimeUnit.SECONDS);
         }
     }
 
@@ -285,9 +270,9 @@ public class RedisUtils
      * @version 1.0
      * @since 2023/12/0 20:16
      */
-    public void setString(RedisKeyEnum Enum, String value, String... items)
+    public void setString(RedisKeyEnum Enum, String value, String... keyItems)
     {
-        stringRedisTemplate.opsForValue().set(Enum.generateKey(items), value, Enum.getExpire(), TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(Enum.generateKey(keyItems), value, Enum.getExpire(), TimeUnit.SECONDS);
     }
 
 
@@ -314,90 +299,6 @@ public class RedisUtils
     public boolean hasKey(String key)
     {
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
-    }
-
-    // region 分布式锁
-    // ===================================== 分布式锁 =====================================
-
-    /**
-     * 尝试获取分布式锁
-     *
-     * @param lockKey   锁的Key
-     * @param requestId 请求标识
-     * @return 是否获取成功
-     */
-    public boolean tryGetDistributedLock(RedisKeyEnum lockKey, String itemKey, String requestId, Long retryTime)
-    {
-        return tryGetDistributedLock(getFullKey(lockKey, itemKey), requestId, lockKey.getExpire(), retryTime);
-    }
-
-    public boolean tryGetDistributedLock(String lockKey, String requestId, Long expireTime, Long retryTime)
-    {
-        long retry = retryTime == null ? MAX_RETRY_TIMES : retryTime;
-        if (retry < 0)
-        {
-            while (true)
-            {
-                if (getLock(lockKey, requestId, expireTime))
-                {
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < retry; i++)
-            {
-                if (getLock(lockKey, requestId, expireTime))
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean getLock(String lockKey, String requestId, Long expireTime)
-    {
-        Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(
-                lockKey,
-                requestId,
-                expireTime,
-                TimeUnit.SECONDS);
-        if (result != null && result)
-        {
-            return true;
-        }
-        try
-        {
-            Thread.sleep(RETRY_INTERVAL);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-        }
-        return false;
-    }
-
-    /**
-     * 释放分布式锁
-     *
-     * @param lockKey   锁的Key
-     * @param requestId 请求标识
-     * @return 是否释放成功
-     */
-    public boolean releaseDistributedLock(String lockKey, String requestId)
-    {
-        if (requestId.equals(stringRedisTemplate.opsForValue().get(lockKey)))
-        {
-            return delete(lockKey);
-        }
-        return false;
-    }
-
-    public boolean releaseDistributedLock(RedisKeyEnum key, String itemKey, String requestId)
-    {
-        return releaseDistributedLock(getFullKey(key, itemKey), requestId);
     }
 
 

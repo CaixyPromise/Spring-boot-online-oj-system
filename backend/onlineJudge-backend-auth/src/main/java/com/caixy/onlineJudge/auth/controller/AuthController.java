@@ -4,16 +4,24 @@ import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
 import com.caixy.onlineJudge.auth.factory.OAuthFactory;
 import com.caixy.onlineJudge.common.exception.BusinessException;
+import com.caixy.onlineJudge.common.exception.ThrowUtils;
 import com.caixy.onlineJudge.common.response.BaseResponse;
 import com.caixy.onlineJudge.common.response.ResultUtils;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
 import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.models.dto.email.EmailLoginRequest;
+import com.caixy.onlineJudge.models.dto.email.EmailRegisterRequest;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.caixy.onlineJudge.models.dto.oauth.github.GithubGetAuthorizationUrlRequest;
+import com.caixy.onlineJudge.models.enums.email.EmailSenderCategoryEnum;
 import com.caixy.onlineJudge.models.enums.oauth2.OAuthProviderEnum;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
+import com.caixy.serviceclient.service.captcha.CaptchaFacadeService;
+import com.caixy.serviceclient.service.captcha.request.VerifyEmailCodeDubboDTO;
+import com.caixy.serviceclient.service.captcha.response.CaptchaOperatorResponse;
 import com.caixy.serviceclient.service.user.UserFacadeService;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
+import com.caixy.serviceclient.service.user.response.UserQueryResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,11 +40,14 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/")
 public class AuthController
 {
     @Resource
     private UserFacadeService userFacadeService;
+
+    @Resource
+    private CaptchaFacadeService captchaFacadeService;
 
     @Resource
     private OAuthFactory oAuthFactory;
@@ -46,6 +57,45 @@ public class AuthController
      */
     private static final Integer DEFAULT_LOGIN_SESSION_TIMEOUT = 60 * 60 * 24 * 7;
 
+    @PostMapping("/register")
+    public BaseResponse<Boolean> emailRegister(@RequestBody EmailRegisterRequest emailRegisterRequest)
+    {
+        String password = emailRegisterRequest.getPassword();
+        String checkPassword = emailRegisterRequest.getCheckPassword();
+        ThrowUtils.throwIf(!password.equals(checkPassword), ErrorCode.PARAMS_ERROR, "两次密码不一致");
+        // 校验缓存
+        String email = emailRegisterRequest.getEmail();
+        String code = emailRegisterRequest.getCode();
+
+        CaptchaOperatorResponse<Boolean> captchaOperatorResponse = captchaFacadeService.verifyEmailCaptcha(
+                VerifyEmailCodeDubboDTO.of(code, email, EmailSenderCategoryEnum.REGISTER.getCode()));
+        if (!captchaOperatorResponse.getData())
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误");
+        }
+        // 注册
+        UserOperatorResponse register = userFacadeService.register(emailRegisterRequest);
+        return ResultUtils.success(register.isSucceed());
+    }
+
+
+    @PostMapping("/login")
+    public BaseResponse<Boolean> emailLogin(@RequestBody EmailLoginRequest emailLoginRequest)
+    {
+        String email = emailLoginRequest.getEmail();
+        UserQueryResponse<UserVO> userVOUserQueryResponse = userFacadeService.queryByEmailAndPass(email,
+                emailLoginRequest.getPassword());
+        if (userVOUserQueryResponse.isSucceed())
+        {
+            UserVO userInfo = userVOUserQueryResponse.getData();
+            doLogin(userInfo);
+            return ResultUtils.success(true);
+        }
+        else {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名或密码错误");
+        }
+    }
+
 
     // region 登录相关
     @GetMapping("/oauth2/{provider}/login")
@@ -54,13 +104,9 @@ public class AuthController
             @ModelAttribute GithubGetAuthorizationUrlRequest authorizationUrlRequest,
             HttpServletRequest request)
     {
-        OAuthProviderEnum providerEnum = OAuthProviderEnum.getProviderEnum(provider);
-        if (providerEnum == null)
-        {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "不支持的OAuth2登录方式");
-        }
+        OAuthProviderEnum providerEnum = getOAuthProvider(provider);
         authorizationUrlRequest.setSessionId(request.getSession().getId());
-        log.info("authorizationUrlRequest:{}", authorizationUrlRequest);
+        log.info("authorizationUrlRequest: {}", authorizationUrlRequest);
         String authorizationUrl = oAuthFactory.getOAuth2ActionStrategy(providerEnum).getAuthorizationUrl(
                 authorizationUrlRequest);
         return ResultUtils.success(authorizationUrl);
@@ -76,11 +122,7 @@ public class AuthController
         allParams.put("sessionId", request.getSession().getId());
         try
         {
-            OAuthProviderEnum providerEnum = OAuthProviderEnum.getProviderEnum(provider);
-            if (providerEnum == null)
-            {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR, "不支持的OAuth2登录方式");
-            }
+            OAuthProviderEnum providerEnum = getOAuthProvider(provider);
             OAuthResultDTO oAuthResultDTO = oAuthFactory.doAuth(providerEnum, allParams);
             if (oAuthResultDTO.isSuccess())
             {
@@ -88,12 +130,7 @@ public class AuthController
                 UserVO userInfo = userOperatorResponse.getData();
                 if (userOperatorResponse.isSucceed() && userInfo != null)
                 {
-                    StpUtil.login(userInfo.getId(),
-                            new SaLoginModel()
-                                    .setIsLastingCookie(true)
-                                    .setTimeout(DEFAULT_LOGIN_SESSION_TIMEOUT));
-                    StpUtil.getSession().set(userInfo.getId().toString(), userInfo);
-
+                    doLogin(userInfo);
                 }
             }
             response.sendRedirect(oAuthResultDTO.getRedirectUrl());
@@ -113,5 +150,14 @@ public class AuthController
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "不支持的OAuth2登录方式");
         }
         return providerEnum;
+    }
+
+    private void doLogin(UserVO userInfo)
+    {
+        StpUtil.login(userInfo.getId(),
+                new SaLoginModel()
+                        .setIsLastingCookie(true)
+                        .setTimeout(DEFAULT_LOGIN_SESSION_TIMEOUT));
+        StpUtil.getSession().set(userInfo.getId().toString(), userInfo);
     }
 }

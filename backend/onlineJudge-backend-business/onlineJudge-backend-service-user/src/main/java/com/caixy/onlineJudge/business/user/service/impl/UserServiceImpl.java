@@ -1,35 +1,38 @@
 package com.caixy.onlineJudge.business.user.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.caixy.onlineJudge.common.cache.redis.annotation.DistributedLock;
 import com.caixy.onlineJudge.common.exception.BusinessException;
-import com.caixy.onlineJudge.common.exception.ThrowUtils;
 
 import com.caixy.onlineJudge.common.regex.RegexUtils;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
-import com.caixy.onlineJudge.constants.common.CommonConstants;
 import com.caixy.onlineJudge.constants.common.UserConstant;
 import com.caixy.onlineJudge.common.encrypt.EncryptionUtils;
 import com.caixy.onlineJudge.business.user.service.UserService;
 import com.caixy.onlineJudge.business.user.mapper.UserMapper;
-import com.caixy.onlineJudge.common.base.utils.SqlUtils;
 import com.caixy.onlineJudge.models.convertor.user.UserConvertor;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.caixy.onlineJudge.models.dto.user.*;
+import com.caixy.onlineJudge.models.enums.redis.RDLockKeyEnum;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 import lombok.extern.slf4j.Slf4j;
 import com.caixy.onlineJudge.models.entity.User;
-import com.caixy.onlineJudge.models.enums.user.UserGenderEnum;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
 import com.caixy.onlineJudge.models.vo.user.LoginUserVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,76 +44,20 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService, InitializingBean
 {
+    private static final String DEFAULT_NICK_NAME_PREFIX = "coder_";
 
-    @Override
-    public long userRegister(UserRegisterRequest userRegisterRequest)
-    {
-        String userPassword = userRegisterRequest.getUserPassword();
-        User user = new User();
-        BeanUtils.copyProperties(userRegisterRequest, user);
-        // 1. 校验
-        validUserInfo(user, true);
-        // 2. 插入数据
-        user.setUserPassword(userPassword);
-        user.setUserRole(UserConstant.DEFAULT_ROLE);
-        return makeRegister(user);
-    }
+    private RBloomFilter<String> nickNameBloomFilter;
 
-    @Override
-    public User userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request)
-    {
-        // 0. 提取参数
-        String userAccount = userLoginRequest.getUserAccount();
-        String userPassword = userLoginRequest.getUserPassword();
-//        String captcha = userLoginRequest.getCaptcha().trim();
-//        String captchaId = userLoginRequest.getCaptchaId();
-        // 1. 校验
-        // 1.1 检查参数是否完整
-        if (StringUtils.isAnyBlank(userAccount, userPassword))
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
-        }
+    private RBloomFilter<String> emailBloomFilter;
 
-        // 1.2 校验验证码
+//    @InjectRedissonClient(clientName = "bloom-filter", name = "bloom-filter")
+    @Resource
+    private RedissonClient redissonClient;
 
-        // 2. 根据账号查询用户是否存在
-        // 查询用户是否存在
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
-        User user = baseMapper.selectOne(queryWrapper);
-        // 用户不存在
-        if (user == null)
-        {
-            log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
-        }
-        if (!EncryptionUtils.matches(userPassword, user.getUserPassword()))
-        {
-            log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
-        }
-        // 检查是否被封号
-        if (user.getUserRole().equals(UserConstant.BAN_ROLE))
-        {
-            log.info("user login failed, userAccount is ban: {}", userAccount);
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户已被封号");
-        }
-        // 3. 记录用户的登录态
-        User userVo = new User();
-        BeanUtils.copyProperties(user, userVo);
-        userVo.setUserPassword(null);
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, userVo);
-        // 登录成功
-        return userVo;
-    }
-
-
+    @Resource
+    private UserMapper userMapper;
 
     /**
      * 获取当前登录用户
@@ -236,61 +183,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
-        Long id = userQueryRequest.getId();
-        String unionId = userQueryRequest.getUnionId();
-        String mpOpenId = userQueryRequest.getMpOpenId();
-        String userName = userQueryRequest.getUserName();
-        String userProfile = userQueryRequest.getUserProfile();
-        String userRole = userQueryRequest.getUserRole();
-        String sortField = userQueryRequest.getSortField();
-        String sortOrder = userQueryRequest.getSortOrder();
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(id != null, "id", id);
-        queryWrapper.eq(StringUtils.isNotBlank(unionId), "unionId", unionId);
-        queryWrapper.eq(StringUtils.isNotBlank(mpOpenId), "mpOpenId", mpOpenId);
-        queryWrapper.eq(StringUtils.isNotBlank(userRole), "userRole", userRole);
-        queryWrapper.like(StringUtils.isNotBlank(userProfile), "userProfile", userProfile);
-        queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
-        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstants.SORT_ORDER_ASC),
-                sortField);
-        return queryWrapper;
+
+        return new QueryWrapper<>();
     }
 
-
-    // 重载的 makeRegister 方法，接收 User 对象
-    @Override
-    public Long makeRegister(User user)
-    {
-        synchronized (user.getUserAccount().intern())
-        {
-            // 检查账户是否重复
-            checkUserAccount(user.getUserAccount());
-
-            // 加密密码并设置
-            String encryptPassword = EncryptionUtils.encodePassword(user.getUserPassword());
-            user.setUserPassword(encryptPassword);
-
-            // 插入数据
-            boolean saveResult = this.save(user);
-            if (!saveResult)
-            {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
-            }
-            return user.getId();
-        }
-    }
-
-    // 私有方法，用于检查账户是否重复
-    private void checkUserAccount(String userAccount)
-    {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
-        long count = this.baseMapper.selectCount(queryWrapper);
-        if (count > 0)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
-        }
-    }
 
     /**
      * 随机生成密码
@@ -374,61 +270,63 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String encryptPassword = EncryptionUtils.encodePassword(userPassword);
         currenUser.setUserPassword(encryptPassword);
         // 清空登录状态
+        StpUtil.logout();
         return this.updateById(currenUser);
     }
-    /**
-     * 校验用户信息
-     *
-     * @author CAIXYPROMISE
-     * @version 1.0
-     * @since 2024/5/21 下午3:56
-     */
-    @Override
-    public void validUserInfo(User user, boolean add)
-    {
-        if (add)
-        {
-            String userAccount = user.getUserAccount();
-            String userPassword = user.getUserPassword();
-            String userEmail = user.getUserEmail();
-            String userPhone = user.getUserPhone();
-            // 检查密码是否合法
-            ThrowUtils.throwIf(!RegexUtils.validatePassword(userPassword), ErrorCode.PARAMS_ERROR, "密码不符合要求");
-            // 检查账号是否合法
-            ThrowUtils.throwIf(!RegexUtils.validateAccount(userAccount), ErrorCode.PARAMS_ERROR, "用户账号格式错误");
-            // 检查手机号是否合法
-            ThrowUtils.throwIf(!RegexUtils.isMobilePhone(userPhone), ErrorCode.PARAMS_ERROR, "手机号格式错误");
-            // 检查用户邮箱
-            ThrowUtils.throwIf(!RegexUtils.isEmail(userEmail), ErrorCode.PARAMS_ERROR, "邮箱格式错误");
 
-            // 查询账号是否存在，同时检查手机、邮箱唯一性
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("userAccount", userAccount).or();
-            queryWrapper.eq("userEmail", userEmail).or();
-            queryWrapper.eq("userPhone", userPhone);
-            long count = baseMapper.selectCount(queryWrapper);
-            // 账号已存在
-            ThrowUtils.throwIf(count > 0, ErrorCode.PARAMS_ERROR, "账号已存在");
-        }
-        Integer gender = user.getUserGender();
-        if (UserGenderEnum.getEnumByValue(gender) == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "性别参数错误");
-        }
-    }
-    /**
-     * 批量根据id获取用户名称
-     *
-     * @author CAIXYPROMISE
-     * @version 1.0
-     * @since 2024/6/7 下午4:32
-     */
+    @DistributedLock(lockKeyEnum = RDLockKeyEnum.USER_LOCK, args = "#email")
     @Override
-    public Map<Long, String> getUserNameByIds(Collection<Long> ids)
+    public UserOperatorResponse registerByEmail(String email, String password)
     {
-        return this.listByIds(ids).stream()
-                .collect(Collectors.toMap(User::getId, User::getUserName));
+        String defaultNickName;
+        String randomString;
+        do
+        {
+            randomString = RandomUtil.randomString(6).toUpperCase();
+            //前缀 + 6位随机数 + 邮箱前6位
+            defaultNickName = String.format("%s_%s_%s", DEFAULT_NICK_NAME_PREFIX, randomString, email.substring(0, 6));
+        } while (nickNameExist(defaultNickName));
+        if (StringUtils.isAnyBlank(password, email))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        if (!RegexUtils.isEmail(email) || !RegexUtils.validatePassword(password))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱或密码格式错误");
+        }
+        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
+
+        User registered = registerUser(email, defaultNickName, password);
+        if (registered != null)
+        {
+            userOperatorResponse.setCode(ErrorCode.SUCCESS.getCode());
+            userOperatorResponse.setMessage(ErrorCode.SUCCESS.getMessage());
+            userOperatorResponse.setData(UserConvertor.INSTANCE.convert(registered));
+            return userOperatorResponse;
+        }
+        userOperatorResponse.setCode(ErrorCode.OPERATION_ERROR.getCode());
+        userOperatorResponse.setMessage(ErrorCode.OPERATION_ERROR.getMessage());
+        return userOperatorResponse;
     }
+
+    private User registerUser(String email, String nickName, String password)
+    {
+        if (emailExist(email))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱已注册");
+        }
+        User user = User.registerUserByEmail(nickName, email, EncryptionUtils.encodePassword(password));
+        boolean result = this.save(user);
+        if (!result)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "注册失败");
+        }
+        // 更新过滤器
+        addNickName(nickName);
+        addEmail(email);
+        return user;
+    }
+
 
     @Override
     public UserOperatorResponse doAuthLogin(OAuthResultDTO resultResponse)
@@ -443,38 +341,128 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq(loginAdapter.getUniqueFieldName(), loginAdapter.getUniqueFieldValue());
         User userInfo = this.getOne(queryWrapper);
         log.info("查询到登录用户信息: {}", userInfo);
-        // 如果未查询到，注册该用户
         boolean isRegister = userInfo == null;
+        // 如果未查询到，注册该用户
         if (isRegister)
         {
-            userInfo = new User();
-            UserConvertor.INSTANCE.copyAllPropertiesIgnoringId(oauthUserInfo, userInfo);
+            userInfo = UserConvertor.INSTANCE.copyAllPropertiesIgnoringId(oauthUserInfo, userInfo);
+            userInfo.setUserRole(UserRoleEnum.USER.getValue());
         }
-        else {
+        else // 更新用户信息
+        {
             userInfo = UserConvertor.INSTANCE.copyPropertiesWithStrategy(
                     oauthUserInfo,
                     userInfo,
-                    new HashSet<>(Arrays.asList("id", "userPassword", "createTime", "updateTime", "isDelete", "userRole")),
+                    new HashSet<>(
+                            Arrays.asList("id", "userPassword", "createTime", "updateTime", "isDelete", "userRole",
+                                    "isActive")),
                     ((sourceValue, targetValue) -> sourceValue != null && targetValue == null));
-
         }
-        userInfo.setUserRole(UserRoleEnum.USER.getValue());
         UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
 
         boolean result = isRegister ? this.save(userInfo) : this.updateById(userInfo);
-        if (!result) {
+        if (!result)
+        {
             log.warn("用户信息操作失败: {}, 方法: {}", userInfo, isRegister ? "注册" : "登录");
             userOperatorResponse.setCode(ErrorCode.OPERATION_ERROR.getCode());
         }
-        else {
+        else
+        {
             userOperatorResponse.setCode(ErrorCode.SUCCESS.getCode());
             UserVO convertedVo = UserConvertor.INSTANCE.convert(userInfo);
             userOperatorResponse.setData(convertedVo);
         }
         return userOperatorResponse;
     }
+
+    @Override
+    public void validUserInfo(User user, boolean isAdd)
+    {
+
+    }
+
+    /**
+     * 根据邮箱查找用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/8/31 下午3:59
+     */
+    @Override
+    public UserVO findByEmail(String email)
+    {
+        return UserConvertor.INSTANCE.convert(userMapper.findByEmail(email));
+    }
+
+    /**
+     * 根据邮箱判断用户是否存在
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/8/31 下午2:45
+     */
+    @Override
+    public boolean emailExist(String email)
+    {
+        //如果布隆过滤器中存在，再进行数据库二次判断
+        if (this.emailBloomFilter != null && this.emailBloomFilter.contains(email))
+        {
+            return userMapper.findByEmail(email) != null;
+        }
+        return false;
+    }
+
+    /**
+     * 根据用户名判断用户是否存在
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/8/31 下午2:45
+     */
+    @Override
+    public boolean nickNameExist(String nickName)
+    {
+        //如果布隆过滤器中存在，再进行数据库二次判断
+        if (this.nickNameBloomFilter != null && this.nickNameBloomFilter.contains(nickName))
+        {
+            return userMapper.findByNickname(nickName) != null;
+        }
+        return false;
+    }
+
+    @Override
+    public UserVO findByEmailAndPass(String email, String password)
+    {
+        User byEmail = userMapper.findByEmail(email);
+        if (byEmail != null && EncryptionUtils.matches(password, byEmail.getUserPassword()))
+        {
+            return UserConvertor.INSTANCE.convert(byEmail);
+        }
+        return null;
+    }
+
+    private boolean addNickName(String nickName)
+    {
+        return this.nickNameBloomFilter != null && this.nickNameBloomFilter.add(nickName);
+    }
+
+    private boolean addEmail(String email)
+    {
+        return this.emailBloomFilter != null && this.emailBloomFilter.add(email);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception
+    {
+        this.nickNameBloomFilter = redissonClient.getBloomFilter("nickName");
+        if (nickNameBloomFilter != null && !nickNameBloomFilter.isExists())
+        {
+            this.nickNameBloomFilter.tryInit(100000L, 0.01);
+        }
+        this.emailBloomFilter = redissonClient.getBloomFilter("email");
+        if (emailBloomFilter != null && !emailBloomFilter.isExists())
+        {
+            this.emailBloomFilter.tryInit(100000L, 0.01);
+        }
+    }
 }
-
-
-
-

@@ -2,6 +2,7 @@ package com.caixy.onlineJudge.auth.strategy;
 
 import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.exception.BusinessException;
+import com.caixy.onlineJudge.common.jackson.ObjectMapperUtil;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +36,7 @@ public abstract class OAuth2ActionStrategy<
 
     protected <T> T safetyConvertMapToObject(Map<String, Object> paramMaps, Class<T> clazz)
     {
-        ObjectMapper objectMapper = new ObjectMapper();
-        T convertValue = objectMapper.convertValue(paramMaps, clazz);
+        T convertValue = ObjectMapperUtil.convertValue(paramMaps, clazz);
         if (convertValue == null)
         {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "授权失败");

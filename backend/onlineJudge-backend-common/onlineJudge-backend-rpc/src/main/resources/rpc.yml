@@ -14,4 +14,5 @@ dubbo:
       group: dubbo
   protocol:
     name: dubbo
+    serialization: hessian2
     port: -1

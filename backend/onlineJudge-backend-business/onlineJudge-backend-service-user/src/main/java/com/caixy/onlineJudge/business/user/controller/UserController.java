@@ -15,10 +15,8 @@ import com.caixy.onlineJudge.business.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.vo.user.AboutMeVO;
-import com.caixy.onlineJudge.models.vo.user.AddUserVO;
 import com.caixy.onlineJudge.models.vo.user.LoginUserVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,82 +35,7 @@ public class UserController
     @Resource
     private UserService userService;
 
-
     // region 登录相关
-
-    /**
-     * 用户注册
-     *
-     * @param userRegisterRequest
-     * @return
-     */
-    @PostMapping("/register")
-    public BaseResponse<Boolean> userRegister(@RequestBody UserRegisterRequest userRegisterRequest)
-    {
-        if (userRegisterRequest == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        String userAccount = userRegisterRequest.getUserAccount();
-        String userPassword = userRegisterRequest.getUserPassword();
-        String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword))
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
-        }
-        // 密码和校验密码相同
-        if (!userPassword.equals(checkPassword))
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
-        }
-        // 执行注册操作
-        long saveResult = userService.userRegister(userRegisterRequest);
-        return ResultUtils.success(saveResult > 0);
-    }
-
-    /**
-     * 用户登录
-     *
-     * @param userLoginRequest
-     * @param request
-     * @return
-     */
-    @PostMapping("/login")
-    public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest,
-                                               HttpServletRequest request)
-    {
-        if (userLoginRequest == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        String userAccount = userLoginRequest.getUserAccount();
-        String userPassword = userLoginRequest.getUserPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword))
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User loginUserVO = userService.userLogin(userLoginRequest, request);
-        return ResultUtils.success(userService.getLoginUserVO(loginUserVO));
-    }
-
-
-    /**
-     * 用户注销
-     *
-     * @param request
-     * @return
-     */
-    @PostMapping("/logout")
-    public BaseResponse<Boolean> userLogout(HttpServletRequest request)
-    {
-        if (request == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        boolean result = userService.userLogout(request);
-        return ResultUtils.success(result);
-    }
-
     /**
      * 获取当前登录用户
      *
@@ -127,54 +50,7 @@ public class UserController
 
     // endregion
 
-
     // region 管理员增删改查
-
-    /**
-     * 创建用户
-     *
-     * @param userAddRequest
-     * @param request
-     * @return
-     */
-    @PostMapping("/add")
-//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<AddUserVO> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request)
-    {
-        // 检查请求信息
-        if (userAddRequest == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User user = new User();
-        BeanUtils.copyProperties(userAddRequest, user);
-        // 参数校验
-        String userAccount = user.getUserAccount();
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount))
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
-        }
-        user.setUserName(userAddRequest.getUserName());
-        // 生成默认密码
-        String defaultPassword = userService.generatePassword();
-        user.setUserPassword(defaultPassword);
-        // 创建
-        Long resultId = userService.makeRegister(user);
-        // 返回结果
-        AddUserVO resultAddUserInfo = AddUserVO.builder()
-                                               .userName(userAddRequest.getUserName())
-                                               .userAccount(userAddRequest.getUserAccount())
-                                               .userPassword(defaultPassword)
-                                               .id(resultId)
-                                               .build();
-        return ResultUtils.success(resultAddUserInfo);
-    }
-
     /**
      * 删除用户
      *

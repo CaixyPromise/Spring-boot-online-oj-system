@@ -3,8 +3,11 @@ spring:
     name: @application.name@
   config:
     import: classpath:rpc.yml,classpath:cache.yml
+  profiles:
+    active: dev
 
 sa-token:
+
   # token 名称（同时也是 cookie 名称）
   token-name: onlineJudge-auth-token
   # token 有效期（单位：秒） 默认30天，-1 代表永久有效
@@ -21,5 +24,15 @@ sa-token:
   is-log: true
 
 
+
 server:
-  port: 8082
+  port: 7880
+  servlet:
+    context-path: /api/auth
+
+dubbo:
+  application:
+    qos-port: 9990
+
+knife4j:
+  enable: true

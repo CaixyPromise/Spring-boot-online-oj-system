@@ -1,8 +1,10 @@
 package com.caixy.onlineJudge.business.user.facade;
 
 import com.caixy.onlineJudge.business.user.service.UserService;
+import com.caixy.onlineJudge.common.rpc.facade.Facade;
+import com.caixy.onlineJudge.constants.code.ErrorCode;
+import com.caixy.onlineJudge.models.dto.email.EmailRegisterRequest;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
-import com.caixy.onlineJudge.models.dto.user.*;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
 import com.caixy.serviceclient.service.user.UserFacadeService;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
@@ -24,34 +26,36 @@ public class UserFacadeServiceImpl implements UserFacadeService
     @Resource
     private UserService userService;
 
+    @Facade
     @Override
     public UserOperatorResponse doOAuthLogin(OAuthResultDTO oAuthResultDTO)
     {
         return userService.doAuthLogin(oAuthResultDTO);
     }
 
+    @Facade
     @Override
-    public UserOperatorResponse login(UserLoginRequest userLoginRequest)
+    public UserOperatorResponse register(EmailRegisterRequest emailRegisterRequest)
     {
-//        userService.userLogin(userLoginRequest);
-        return null;
+        return userService.registerByEmail(emailRegisterRequest.getEmail(), emailRegisterRequest.getPassword());
     }
 
+    @Facade
     @Override
-    public UserOperatorResponse register(UserRegisterRequest userRegisterRequest)
+    public UserQueryResponse<UserVO> queryByEmail(String email)
     {
-        return null;
+        return new UserQueryResponse<>(ErrorCode.SUCCESS, userService.findByEmail(email));
     }
 
+    @Facade
     @Override
-    public UserOperatorResponse modify(UserUpdateMyRequest userModifyRequest)
+    public UserQueryResponse<UserVO> queryByEmailAndPass(String email, String password)
     {
-        return null;
-    }
-
-    @Override
-    public UserQueryResponse<UserVO> query(UserQueryRequest userLoginRequest)
-    {
-        return null;
+        UserVO byEmailAndPass = userService.findByEmailAndPass(email, password);
+        if (byEmailAndPass != null)
+        {
+            return new UserQueryResponse<>(ErrorCode.SUCCESS, byEmailAndPass);
+        }
+        return new UserQueryResponse<>(ErrorCode.NOT_FOUND_ERROR, null);
     }
 }

@@ -1,6 +1,6 @@
 package com.caixy.serviceclient.service.captcha;
 
-import com.caixy.onlineJudge.models.vo.captcha.CaptchaVO;
+import com.caixy.serviceclient.service.captcha.request.VerifyEmailCodeDubboDTO;
 import com.caixy.serviceclient.service.captcha.response.CaptchaOperatorResponse;
 
 /**
@@ -12,7 +12,5 @@ import com.caixy.serviceclient.service.captcha.response.CaptchaOperatorResponse;
  */
 public interface CaptchaFacadeService
 {
-    CaptchaOperatorResponse<CaptchaVO> verifyCaptcha(String token, String code);
-
-    CaptchaOperatorResponse<Boolean> generateCaptcha();
+    CaptchaOperatorResponse<Boolean> verifyEmailCaptcha(VerifyEmailCodeDubboDTO codeDubboDTO);
 }

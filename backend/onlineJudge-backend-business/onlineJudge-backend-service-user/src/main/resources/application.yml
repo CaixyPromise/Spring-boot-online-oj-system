@@ -7,18 +7,31 @@ server:
       cookie:
         max-age: 2592000
         path: /api
+
 spring:
   application:
     name: @application.name@
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  #  配置数据源
-  servlet:
-    multipart:
-      max-file-size: 10MB
   config:
     import: classpath:rpc.yml,classpath:cache.yml,classpath:datasource.yml
 
 knife4j:
   enable: true
+
+logging:
+  level:
+    web: debug
+
+dubbo:
+  application:
+    qos-port: 9991
+
+redis-session:
+  instance:
+    bloom-filter:
+      host: 127.0.0.1
+      port: 6379
+      database: 5
+      timeout: 5000

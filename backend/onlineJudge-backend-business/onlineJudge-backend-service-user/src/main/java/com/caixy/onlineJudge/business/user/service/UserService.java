@@ -2,17 +2,17 @@ package com.caixy.onlineJudge.business.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.onlineJudge.common.cache.redis.annotation.DistributedLock;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.caixy.onlineJudge.models.dto.user.*;
 import com.caixy.onlineJudge.models.entity.User;
+import com.caixy.onlineJudge.models.enums.redis.RDLockKeyEnum;
 import com.caixy.onlineJudge.models.vo.user.LoginUserVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author CAIXYPROMISE
@@ -21,21 +21,6 @@ import java.util.Map;
  */
 public interface UserService extends IService<User>
 {
-    /**
-     * 用户注册
-     *
-     * @return 新用户 id
-     */
-    long userRegister(UserRegisterRequest userRegisterRequest);
-
-    /**
-     * 用户登录
-     *
-     * @param userLoginRequest 用户请求信息
-     * @param request
-     * @return 脱敏后的用户信息
-     */
-    User userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request);
 
     /**
      * 获取当前登录用户
@@ -108,16 +93,22 @@ public interface UserService extends IService<User>
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
-    //    Long makeRegister(String userAccount, String userPassword);
-    Long makeRegister(User user);
-
     String generatePassword();
 
     Boolean modifyPassword(Long userId, UserModifyPasswordRequest userModifyPasswordRequest);
 
-    void validUserInfo(User user, boolean add);
-
-    Map<Long, String> getUserNameByIds(Collection<Long> ids);
+    @DistributedLock(lockKeyEnum = RDLockKeyEnum.USER_LOCK, args = "#email")
+    UserOperatorResponse registerByEmail(String email, String password);
 
     UserOperatorResponse doAuthLogin(OAuthResultDTO oAuthResultDTO);
+
+    void validUserInfo(User user, boolean isAdd);
+
+    UserVO findByEmail(String email);
+
+    boolean emailExist(String email);
+
+    boolean nickNameExist(String nickName);
+
+    UserVO findByEmailAndPass(String email, String password);
 }

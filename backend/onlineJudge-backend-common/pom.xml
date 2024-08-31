@@ -23,6 +23,8 @@
         <module>onlineJudge-backend-base</module>
         <module>onlineJudge-backend-web</module>
         <module>onlineJudge-backend-datasource</module>
+        <module>onlineJudge-backend-email</module>
+        <module>onlineJudge-backend-rabbit-mq</module>
     </modules>
 
     <properties>
