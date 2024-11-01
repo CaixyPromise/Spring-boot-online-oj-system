@@ -18,7 +18,9 @@ import java.io.File;
         scanBasePackages = {
                 "com.caixy.onlineJudge.business.user",
                 "com.caixy.onlineJudge.common",
-                "com.caixy.onlineJudge.web"
+                "com.caixy.onlineJudge.web",
+                "com.caixy.onlineJudge.rabbitmq",
+
         }
 )
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
@@ -44,6 +46,5 @@ public class OnlineJudgeUserServiceApplication
         });
         //启动应用
         application.run(args);
-
     }
 }

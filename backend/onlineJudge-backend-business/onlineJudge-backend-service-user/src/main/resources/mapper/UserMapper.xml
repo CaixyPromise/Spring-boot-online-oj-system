@@ -29,6 +29,7 @@
         userGender,userAvatar,createTime,
         updateTime,isActive,isDelete
     </sql>
+
     <select id="findByNickname" resultMap="BaseResultMap">
         SELECT id,nickName,userEmail,
                userPassword,githubId,userRole,
@@ -49,4 +50,17 @@
         FROM user WHERE isDelete = 0
         <if test="userEmail != null"> AND userEmail = #{userEmail}</if>
     </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT id,nickName,userEmail,
+        userPassword,githubId,userRole,
+        unionId,userPhone,mpOpenId,
+        userGender,userAvatar,createTime,
+        updateTime,isActive,isDelete
+        FROM user WHERE isDelete = 0
+        <if test="userId != null"> AND id = #{userId}</if>
+    </select>
+
+
+
 </mapper>

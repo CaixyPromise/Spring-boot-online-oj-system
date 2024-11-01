@@ -19,7 +19,6 @@
         <module>onlineJudge-backend-dubbo-client</module>
         <!-- 鉴权中心-->
         <module>onlineJudge-backend-auth</module>
-        <module>onlineJudge-backend-business/onlineJudge-backend-service-captcha</module>
     </modules>
 
     <properties>

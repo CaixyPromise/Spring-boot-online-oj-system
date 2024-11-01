@@ -2,7 +2,8 @@ package com.caixy.onlineJudge.business.captcha.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import com.caixy.onlineJudge.business.captcha.annotation.EmailTypeTarget;
-import com.caixy.onlineJudge.business.captcha.producer.EmailCaptchaRabbitMQProducer;
+import com.caixy.onlineJudge.common.email.models.captcha.SendCaptchaEmailDTO;
+import com.caixy.onlineJudge.common.email.mq.EmailSenderRabbitMQProducer;
 import com.caixy.onlineJudge.business.captcha.service.EmailCaptchaService;
 import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.exception.BusinessException;
@@ -39,7 +40,7 @@ public class EmailCaptchaServiceImpl implements EmailCaptchaService
     private static final String EMAIL_CAPTCHA_SCENE_KEY = "scene";
     private static final Logger log = LoggerFactory.getLogger(EmailCaptchaServiceImpl.class);
     @Resource
-    private EmailCaptchaRabbitMQProducer emailCaptchaRabbitMQProducer;
+    private EmailSenderRabbitMQProducer<SendCaptchaEmailDTO> emailCaptchaRabbitMQProducer;
     @Resource
     private RedisUtils redisUtils;
     private ConcurrentHashMap<EmailSenderCategoryEnum, Method> emailSenderMap = new ConcurrentHashMap<>();
@@ -99,7 +100,6 @@ public class EmailCaptchaServiceImpl implements EmailCaptchaService
                categoryEnum.equals(senderCategoryEnum);
     }
 
-
     /**
      * 发送邮件
      *
@@ -146,16 +146,15 @@ public class EmailCaptchaServiceImpl implements EmailCaptchaService
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码发送过于频繁，请稍后再试");
             }
         }
-
         String captchaCode = RandomUtil.randomNumbers(6);
         Map<String, Object> captchaCodeMap = new HashMap<>();
         captchaCodeMap.put(EMAIL_CAPTCHA_KEY, captchaCode);
         captchaCodeMap.put(EMAIL_CAPTCHA_TIME_KEY, System.currentTimeMillis());
         captchaCodeMap.put(EMAIL_CAPTCHA_SCENE_KEY, senderCategoryEnum.getCode());
-
         redisUtils.setHashMap(RedisKeyEnum.EMAIL_CAPTCHA, captchaCodeMap, toEmail);
-
-        emailCaptchaRabbitMQProducer.sendEmailCaptcha(toEmail, captchaCode);
+        emailCaptchaRabbitMQProducer.sendEmail(toEmail,
+                new SendCaptchaEmailDTO(captchaCode),
+                EmailSenderCategoryEnum.CAPTCHA);
         return true;
     }
 

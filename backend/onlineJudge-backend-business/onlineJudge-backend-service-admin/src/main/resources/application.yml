@@ -1,0 +1,24 @@
+server:
+  port: 8110
+  servlet:
+    context-path: /api/admin
+
+spring:
+  application:
+    name: @application.name@
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  config:
+    import: classpath:rpc.yml,classpath:cache.yml
+
+knife4j:
+  enable: true
+
+logging:
+  level:
+    web: debug
+
+dubbo:
+  application:
+    qos-port: 9999

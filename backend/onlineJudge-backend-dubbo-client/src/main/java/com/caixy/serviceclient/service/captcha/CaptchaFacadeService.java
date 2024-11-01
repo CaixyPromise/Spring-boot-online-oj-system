@@ -1,6 +1,7 @@
 package com.caixy.serviceclient.service.captcha;
 
 import com.caixy.serviceclient.service.captcha.request.VerifyEmailCodeDubboDTO;
+import com.caixy.serviceclient.service.captcha.request.VerifyPhotoCodeDubboDTO;
 import com.caixy.serviceclient.service.captcha.response.CaptchaOperatorResponse;
 
 /**
@@ -12,5 +13,7 @@ import com.caixy.serviceclient.service.captcha.response.CaptchaOperatorResponse;
  */
 public interface CaptchaFacadeService
 {
-    CaptchaOperatorResponse<Boolean> verifyEmailCaptcha(VerifyEmailCodeDubboDTO codeDubboDTO);
+    CaptchaOperatorResponse verifyEmailCaptcha(VerifyEmailCodeDubboDTO codeDubboDTO);
+
+    CaptchaOperatorResponse verifyPhotoCaptcha(VerifyPhotoCodeDubboDTO codeDubboDTO);
 }

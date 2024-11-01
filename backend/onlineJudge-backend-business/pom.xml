@@ -21,6 +21,8 @@
         <module>onlineJudge-backend-service-user</module>
         <module>onlineJudge-backend-service-judge</module>
         <module>onlineJudge-backend-service-question</module>
+        <module>onlineJudge-backend-service-admin</module>
+        <module>onlineJudge-backend-service-captcha</module>
     </modules>
 
 </project>

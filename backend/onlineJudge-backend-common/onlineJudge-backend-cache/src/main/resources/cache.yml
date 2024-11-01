@@ -28,6 +28,23 @@ spring:
         nettyThreads: 32
         codec: !<org.redisson.codec.JsonJacksonCodec> {}
         transportMode: "NIO"
+
+jetcache:
+  statIntervalMinutes: 1
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      keyConvertor: fastjson
+  remote:
+    default:
+      type: redisson
+      keyConvertor: fastjson
+      broadcastChannel: ${spring.application.name}
+      keyPrefix: ${spring.application.name}
+      valueEncoder: java
+      valueDecoder: java
+      defaultExpireInMillis: 5000
 #redis-session:
 #  instance:
 #    lock:

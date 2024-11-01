@@ -18,7 +18,8 @@ public enum EmailSenderCategoryEnum
     REGISTER(1, "注册邮件"),
     FORGET_PASSWORD(2, "忘记密码邮件"),
     CAPTCHA(3, "验证码邮件"),
-    PAYMENT_INFO(4, "支付信息")
+    PAYMENT_INFO(4, "支付信息"),
+    ACTIVE_USER(5, "激活用户")
     ;
 
     private final Integer code;

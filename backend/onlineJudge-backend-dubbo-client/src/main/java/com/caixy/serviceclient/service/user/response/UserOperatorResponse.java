@@ -30,4 +30,9 @@ public class UserOperatorResponse extends BaseResponse<UserVO>
     {
         super(errorCode.getCode(), userInfo, message);
     }
+
+    public static UserOperatorResponse success(UserVO userInfo)
+    {
+        return new UserOperatorResponse(userInfo);
+    }
 }

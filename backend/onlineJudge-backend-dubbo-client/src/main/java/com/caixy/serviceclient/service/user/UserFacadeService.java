@@ -2,9 +2,14 @@ package com.caixy.serviceclient.service.user;
 
 import com.caixy.onlineJudge.models.dto.email.EmailRegisterRequest;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
+import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
+import com.caixy.serviceclient.service.user.request.UserQueryFacadeRequest;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 import com.caixy.serviceclient.service.user.response.UserQueryResponse;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 用户接口远程调用类
@@ -22,14 +27,19 @@ public interface UserFacadeService
      * @param emailRegisterRequest
      * @return
      */
-    UserOperatorResponse register(EmailRegisterRequest emailRegisterRequest);
+    UserOperatorResponse preRegister(EmailRegisterRequest emailRegisterRequest);
 
     /**
-     * 用户信息查询
+     * 激活用户
      *
-     * @param email@return
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/6 上午2:57
      */
-    UserQueryResponse<UserVO> queryByEmail(String email);
+    UserOperatorResponse activeUserAccount(User userInfo, String nickName, Integer userGender);
 
-    UserQueryResponse<UserVO> queryByEmailAndPass(String email, String password);
+
+    UserQueryResponse<UserVO> query(UserQueryFacadeRequest userQueryFacadeRequest);
+
+    UserQueryResponse<List<User>> queryUserByIds(Collection<Long> userIds);
 }

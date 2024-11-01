@@ -34,7 +34,6 @@ public class FacadeAspect
     @Around("@annotation(com.caixy.onlineJudge.common.rpc.facade.Facade)")
     public Object facade(ProceedingJoinPoint pjp) throws Exception
     {
-
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 

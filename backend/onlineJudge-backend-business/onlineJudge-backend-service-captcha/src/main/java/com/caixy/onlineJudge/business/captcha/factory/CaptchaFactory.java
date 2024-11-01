@@ -2,7 +2,6 @@ package com.caixy.onlineJudge.business.captcha.factory;
 
 
 import cn.dev33.satoken.SaManager;
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.caixy.onlineJudge.business.captcha.annotation.CaptchaTypeTarget;
 import com.caixy.onlineJudge.business.captcha.strategy.CaptchaGenerationStrategy;
@@ -10,12 +9,10 @@ import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.exception.BusinessException;
 import com.caixy.onlineJudge.common.base.utils.SpringContextUtils;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
-import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.constants.common.CommonConstant;
 import com.caixy.onlineJudge.models.enums.redis.RedisKeyEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -68,7 +65,7 @@ public class CaptchaFactory
     public boolean verifyCaptcha(String captchaCode)
     {
         // 获取当前用户的验证码Id
-        String codeId = SaManager.getSaTokenDao().get(CommonConstants.CAPTCHA_SIGN);
+        String codeId = SaManager.getSaTokenDao().get(CommonConstant.CAPTCHA_SIGN);
         if (StringUtils.isBlank(codeId))
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误");
@@ -80,13 +77,14 @@ public class CaptchaFactory
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误");
         }
         // 移除缓存的uuid
-        SaManager.getSaTokenDao().delete(CommonConstants.CAPTCHA_SIGN);
+        SaManager.getSaTokenDao().delete(CommonConstant.CAPTCHA_SIGN);
         boolean removeByCache = redisUtils.delete(RedisKeyEnum.CAPTCHA_CODE, codeId);
         if (!removeByCache)
         {
             log.warn("验证码校验失败，移除缓存失败，sessionId:{}", codeId);
         }
+        log.info("redis code: {}, code of submit: {}", redisCode, captchaCode);
         // 验证码不区分大小写
-        return !redisCode.equalsIgnoreCase(captchaCode.trim());
+        return redisCode.equalsIgnoreCase(captchaCode.trim());
     }
 }

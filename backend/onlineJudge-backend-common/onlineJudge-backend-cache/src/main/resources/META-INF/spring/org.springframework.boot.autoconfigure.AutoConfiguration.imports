@@ -1,1 +1,1 @@
-com.caixy.onlineJudge.common.cache.redis.config.CacheConfiguration
+com.caixy.onlineJudge.common.cache.config.CacheConfiguration

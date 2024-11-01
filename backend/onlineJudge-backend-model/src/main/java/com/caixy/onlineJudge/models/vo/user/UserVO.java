@@ -25,6 +25,11 @@ public class UserVO implements Serializable
     private String nickName;
 
     /**
+     * 用户邮箱
+     */
+    private String userEmail;
+
+    /**
      * 用户头像
      */
     private String userAvatar;

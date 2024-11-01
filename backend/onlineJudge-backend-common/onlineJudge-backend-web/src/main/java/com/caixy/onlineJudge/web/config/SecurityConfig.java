@@ -1,6 +1,6 @@
 package com.caixy.onlineJudge.web.config;
 
-import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.constants.common.CommonConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,16 +21,16 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig
 {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception
-    {
-        http.csrf(AbstractHttpConfigurer::disable) // 使用新的配置方式禁用CSRF保护
-                .authorizeRequests(authz -> authz
-                        .requestMatchers(request -> {
-                            String forwardBy = request.getHeader("X-Forwarded-By");
-                            return StringUtils.isNotBlank(forwardBy) && forwardBy.equals(CommonConstants.HEADER_SERVICE_GATEWAY_VALUE);
-                        }).permitAll()  // 只允许网关转发的请求
-                        .anyRequest().permitAll()//.denyAll()  // 拒绝所有其他请求
-                );;
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)  // 禁用CSRF
+            .authorizeRequests(authz -> authz
+                    .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()  // 允许所有OPTIONS请求
+                    .requestMatchers(request -> {
+                        String forwardBy = request.getHeader("X-Forwarded-By");
+                        return forwardBy != null && forwardBy.equals("Service-Gateway");  // 确保是网关转发的请求
+                    }).permitAll()
+                    .anyRequest().denyAll()  // 拒绝所有其他请求
+            );
         return http.build();
     }
 }

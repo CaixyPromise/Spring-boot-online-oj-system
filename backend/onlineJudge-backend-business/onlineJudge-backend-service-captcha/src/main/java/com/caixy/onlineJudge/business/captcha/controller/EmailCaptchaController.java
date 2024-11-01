@@ -1,6 +1,5 @@
 package com.caixy.onlineJudge.business.captcha.controller;
 
-import com.caixy.onlineJudge.business.captcha.producer.EmailCaptchaRabbitMQProducer;
 import com.caixy.onlineJudge.business.captcha.service.EmailCaptchaService;
 import com.caixy.onlineJudge.common.exception.BusinessException;
 import com.caixy.onlineJudge.common.response.BaseResponse;

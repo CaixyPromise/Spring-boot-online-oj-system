@@ -1,0 +1,4 @@
+com.caixy.serviceclient.service.user.request.condition.UserEmailAndPassQueryCondition
+com.caixy.serviceclient.service.user.request.condition.UserEmailQueryCondition
+com.caixy.serviceclient.service.user.request.condition.UserIdQueryCondition
+com.caixy.serviceclient.service.user.request.condition.UserNickNameQueryCondition

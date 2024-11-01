@@ -7,6 +7,8 @@ import com.caixy.onlineJudge.models.enums.user.UserPermission;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
 import com.caixy.onlineJudge.models.enums.user.UserStateEnum;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -21,14 +23,22 @@ import java.util.List;
 @Component
 public class StpInterfaceImpl implements StpInterface
 {
+    private static final Logger log = LoggerFactory.getLogger(StpInterfaceImpl.class);
+
+    public StpInterfaceImpl()
+    {
+        log.info("StpInterfaceImpl 实例化成功");
+    }
+
     @Override
     public List<String> getPermissionList(Object loginId, String loginType)
     {
+        log.info("getPermissionList loginId: {}", loginId);
         UserVO userInfo = (UserVO) StpUtil.getSessionByLoginId(loginId).get((String) loginId);
 
         if (userInfo.getUserRole() == UserRoleEnum.ADMIN || userInfo.getUserActive().equals(UserStateEnum.ACTIVE))
         {
-            return Arrays.asList(UserPermission.BASIC.name(), UserPermission.AUTH.name());
+            return Arrays.asList(UserPermission.BASIC.name(), UserPermission.AUTH.name(), UserPermission.ADMIN.name());
         }
 
         if (userInfo.getUserActive().equals(UserStateEnum.DISABLED))
@@ -42,6 +52,7 @@ public class StpInterfaceImpl implements StpInterface
     @Override
     public List<String> getRoleList(Object loginId, String loginType)
     {
+        log.info("getRoleList loginId: {}", loginId);
         UserVO userInfo = (UserVO) StpUtil.getSessionByLoginId(loginId).get((String) loginId);
         if (userInfo.getUserRole() == UserRoleEnum.ADMIN)
         {

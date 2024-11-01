@@ -12,7 +12,7 @@ import com.caixy.onlineJudge.constants.code.ErrorCode;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.caixy.onlineJudge.models.dto.oauth.github.GithubCallbackRequest;
 import com.caixy.onlineJudge.models.dto.oauth.github.GithubCallbackResponse;
-import com.caixy.onlineJudge.models.dto.oauth.github.GithubGetAuthorizationUrlRequest;
+import com.caixy.onlineJudge.models.dto.oauth.github.GetAuthorizationUrlRequest;
 import com.caixy.onlineJudge.models.dto.oauth.github.GithubUserProfileDTO;
 import com.caixy.onlineJudge.models.dto.user.UserLoginByOAuthAdapter;
 import com.caixy.onlineJudge.models.entity.User;
@@ -45,7 +45,7 @@ import java.util.Map;
 public class GithubOAuthActionStrategyImpl extends OAuth2ActionStrategy<
         GithubCallbackResponse,
         GithubUserProfileDTO,
-        GithubGetAuthorizationUrlRequest,
+        GetAuthorizationUrlRequest,
         GithubCallbackRequest>
 {
     @InjectOAuthConfig(clientName = OAuthProviderEnum.GITHUB)
@@ -56,7 +56,7 @@ public class GithubOAuthActionStrategyImpl extends OAuth2ActionStrategy<
 
 
     @Override
-    public String getAuthorizationUrl(GithubGetAuthorizationUrlRequest authorizationUrlRequest)
+    public String getAuthorizationUrl(GetAuthorizationUrlRequest authorizationUrlRequest)
     {
         String state = RandomUtil.randomNumbers(5);
         String url = githubClient.getAuthServerUrl() +

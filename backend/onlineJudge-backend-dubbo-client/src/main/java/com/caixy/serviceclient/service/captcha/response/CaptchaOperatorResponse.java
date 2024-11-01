@@ -17,7 +17,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
-public class CaptchaOperatorResponse<T> extends BaseResponse<T>
+public class CaptchaOperatorResponse extends BaseResponse<Boolean>
 {
-    private T data;
+    private Boolean data;
 }

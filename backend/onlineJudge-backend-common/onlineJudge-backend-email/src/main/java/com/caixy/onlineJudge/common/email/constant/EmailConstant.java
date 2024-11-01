@@ -22,6 +22,8 @@ public interface EmailConstant
      */
     String EMAIL_HTML_CONTENT_PATH = "email-template/captcha.html";
 
+    String EMAIL_HTML_ACTIVE_PATH = "email-template/active-user.html";
+
     /**
      * 电子邮件html支付成功路径
      */
@@ -61,7 +63,7 @@ public interface EmailConstant
     /**
      * 平台地址
      */
-    String PLATFORM_ADDRESS = "<a href='https://api.PROMISE.icu/'>请联系我们</a>";
+    String PLATFORM_ADDRESS_A_HREF = "<a href='https://api.PROMISE.icu/%s'>%s</a>";
 
     String PATH_ADDRESS = "'https://api.PROMISE.icu/'";
 

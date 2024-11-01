@@ -2,10 +2,9 @@ package com.caixy.onlineJudge.auth.strategy;
 
 import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.exception.BusinessException;
-import com.caixy.onlineJudge.common.jackson.ObjectMapperUtil;
+import com.caixy.onlineJudge.common.objectMapper.ObjectMapperUtil;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.annotation.Resource;
 import java.util.Map;

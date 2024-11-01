@@ -1,6 +1,6 @@
 package com.caixy.onlineJudge.common.json;
 
-import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.constants.common.CommonConstant;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 public class JsonUtils
 {
     private static final Gson gson = new GsonBuilder()
-            .setDateFormat(CommonConstants.DATE_TIME_PATTERN)
+            .setDateFormat(CommonConstant.DATE_TIME_PATTERN)
             .setLongSerializationPolicy(LongSerializationPolicy.STRING)
             .serializeNulls().create();
 
@@ -72,7 +72,7 @@ public class JsonUtils
         return gson.toJson(map);
     }
 
-    public static String toJsonString(Object object)
+    public static String toJson(Object object)
     {
         return gson.toJson(object);
     }
@@ -84,7 +84,7 @@ public class JsonUtils
      * @param <T>  对象类型
      * @return 对象列表
      */
-    public static <T> List<T> jsonToList(String json)
+    public static <T> List<T> toList(String json)
     {
         return jsonToObject(json, new TypeToken<List<T>>()
         {

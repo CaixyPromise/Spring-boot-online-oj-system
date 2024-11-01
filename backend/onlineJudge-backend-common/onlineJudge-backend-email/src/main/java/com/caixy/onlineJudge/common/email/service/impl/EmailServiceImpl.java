@@ -4,15 +4,15 @@ package com.caixy.onlineJudge.common.email.service.impl;
 import com.caixy.onlineJudge.common.email.aspect.EmailCategoryHandler;
 import com.caixy.onlineJudge.common.email.config.EmailConfig;
 import com.caixy.onlineJudge.common.email.constant.EmailConstant;
-import com.caixy.onlineJudge.common.email.models.SendCaptchaEmailDTO;
-import com.caixy.onlineJudge.common.email.models.SendOrderInfoDTO;
+import com.caixy.onlineJudge.common.email.models.active.SendUserActiveDTO;
+import com.caixy.onlineJudge.common.email.models.captcha.SendCaptchaEmailDTO;
+import com.caixy.onlineJudge.common.email.models.order.SendOrderInfoDTO;
 import com.caixy.onlineJudge.common.email.service.EmailService;
 import com.caixy.onlineJudge.common.email.utils.EmailTemplateUtil;
 import com.caixy.onlineJudge.common.json.JsonUtils;
 import com.caixy.onlineJudge.models.dto.email.EmailSenderRabbitMQConsumerDTO;
 import com.caixy.onlineJudge.models.enums.email.EmailSenderCategoryEnum;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -88,6 +88,19 @@ public class EmailServiceImpl implements EmailService
         log.info("fillEmailHandlerMap: {}", emailCategoryHandlerMap);
     }
 
+    @EmailCategoryHandler(value = EmailSenderCategoryEnum.ACTIVE_USER)
+    protected Boolean sendActiveUserEmail(EmailSenderRabbitMQConsumerDTO<?> emailSenderDTO)
+    {
+        SendUserActiveDTO sendUserActiveDTO = JsonUtils.mapToObject(emailSenderDTO.getData(), SendUserActiveDTO.class);
+        return doSendEmail(
+                emailSenderDTO.getToEmail(),
+                "用户激活",
+                EmailTemplateUtil.buildActiveEmailContent(
+                                         EmailConstant.EMAIL_HTML_ACTIVE_PATH,
+                                         sendUserActiveDTO.getToken()),
+                EmailSenderCategoryEnum.ACTIVE_USER);
+    }
+
     /**
      * 发送邮箱验证码
      *
@@ -105,6 +118,7 @@ public class EmailServiceImpl implements EmailService
                 EmailTemplateUtil.buildCaptchaEmailContent(EmailConstant.EMAIL_HTML_CONTENT_PATH, sendCaptchaEmailDTO.getCode()),
                 EmailSenderCategoryEnum.CAPTCHA);
     }
+
 
     /**
      * 发送支付成功信息

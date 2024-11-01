@@ -12,7 +12,20 @@ import lombok.Getter;
 @Getter
 public enum RedisKeyEnum
 {
-    CATEGORY_PARENT_BY_KEY("category:parent:", -1L),
+    /**
+     * 激活用户，1天 + 30分钟，适配临时token
+     */
+    ACTIVE_USER("active:", 60L * 60 * 24 + 60L* 30),
+
+    /**
+     * 激活用户搜索用户名的临时token, 30分钟
+     */
+    ACTIVE_USER_TOKEN("active_user_token:", 60L * 30),
+
+    /**
+     * 标记已经获取激活用户临时token的key，30分钟
+     */
+    ACTIVE_USER_TOKEN_MARK("active_user_token_mark:", 60L * 30),
 
     /**
      * 验证码缓存，5分钟

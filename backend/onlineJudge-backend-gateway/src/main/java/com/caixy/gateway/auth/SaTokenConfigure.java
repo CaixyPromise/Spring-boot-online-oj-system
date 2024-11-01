@@ -1,10 +1,14 @@
 package com.caixy.gateway.auth;
 
+import cn.dev33.satoken.SaManager;
+import cn.dev33.satoken.context.SaHolder;
+import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
 import cn.dev33.satoken.reactor.context.SaReactorSyncHolder;
 import cn.dev33.satoken.reactor.filter.SaReactorFilter;
+import cn.dev33.satoken.router.SaHttpMethod;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
@@ -39,9 +43,11 @@ public class SaTokenConfigure
                 .addInclude("/**")
                 // 开放地址
                 .addExclude("/favicon.ico")
+
                 // 鉴权方法：每次访问进入
                 .setAuth(obj ->
                 {
+                    SaManager.getLog().debug("----- 请求path={}  提交token={}", SaHolder.getRequest().getRequestPath(), StpUtil.getTokenValue());
                     // 登录校验 -- 拦截所有路由，并排除/auth/login 用于开放登录
                     SaRouter.match("/**")
 //                            .notMatch("/api/**")//系统服务全排除
@@ -57,8 +63,25 @@ public class SaTokenConfigure
                             // 排除验证码
                             .notMatch("/api/captcha/*/**")
                             // 权限认证 -- 不同模块, 校验不同权限
-                            .match("/api/admin/**", r -> StpUtil.checkRole(UserRoleEnum.ADMIN.name()))
+//                            .match("/api/admin/**", r -> StpUtil.checkPermission(UserPermission.AUTH.name()))
                             .match("/api/user/**", r -> StpUtil.checkPermission(UserPermission.BASIC.name()));
+                })
+                // 前置函数：在每次认证函数之前执行
+                .setBeforeAuth(obj -> {
+                    SaRequest request = SaHolder.getRequest();
+
+                    // 设置CORS响应头
+                    SaHolder.getResponse()
+                            .setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"))
+                            .setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+                            .setHeader("Access-Control-Allow-Headers", "Content-Type, authToken, Authorization")
+                            .setHeader("Access-Control-Allow-Credentials", "true")  // 允许携带Cookie
+                            .setHeader("Access-Control-Max-Age", "3600");  // 预检请求缓存时间
+
+                    // 如果是OPTIONS预检请求，则直接返回
+                    SaRouter.match(SaHttpMethod.OPTIONS)
+                            .free(r -> System.out.println("--------OPTIONS预检请求，不做处理"))
+                            .back();
                 })
                 // 异常处理方法：每次setAuth函数出现异常时进入
                 .setError(this::getSaResult);

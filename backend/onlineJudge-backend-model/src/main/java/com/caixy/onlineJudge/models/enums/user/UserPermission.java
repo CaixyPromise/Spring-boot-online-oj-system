@@ -19,6 +19,7 @@ public enum UserPermission
      * 已实名认证权限
      */
     AUTH,
+    ADMIN,
 
     /**
      * 已冻结权限

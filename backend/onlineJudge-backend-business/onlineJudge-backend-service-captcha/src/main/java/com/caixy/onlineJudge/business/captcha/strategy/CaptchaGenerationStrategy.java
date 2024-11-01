@@ -1,14 +1,13 @@
 package com.caixy.onlineJudge.business.captcha.strategy;
 
 import cn.dev33.satoken.SaManager;
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.codec.Base64;
 
 import com.caixy.onlineJudge.models.vo.captcha.CaptchaVO;
 import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.exception.BusinessException;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
-import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.constants.common.CommonConstant;
 import com.caixy.onlineJudge.models.enums.redis.RedisKeyEnum;
 import com.google.code.kaptcha.Producer;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -65,7 +63,7 @@ public abstract class CaptchaGenerationStrategy
         // 写入redis
         // 并设置过期时间: 5分钟
         log.info("captcha code: {}", code);
-        SaManager.getSaTokenDao().set(CommonConstants.CAPTCHA_SIGN, uuid, 5 * 60);
+        SaManager.getSaTokenDao().set(CommonConstant.CAPTCHA_SIGN, uuid, 5 * 60);
         redisUtils.setString(RedisKeyEnum.CAPTCHA_CODE,
                 code, uuid);
         // 过期时间5分钟
@@ -77,8 +75,7 @@ public abstract class CaptchaGenerationStrategy
 
     protected void tryRemoveLastCaptcha()
     {
-        log.info("try remove last captcha");
-        String lastUuid = SaManager.getSaTokenDao().get(CommonConstants.CAPTCHA_SIGN);
+        String lastUuid = SaManager.getSaTokenDao().get(CommonConstant.CAPTCHA_SIGN);
         if (lastUuid != null)
         {
             redisUtils.delete(RedisKeyEnum.CAPTCHA_CODE, lastUuid);

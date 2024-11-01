@@ -1,6 +1,7 @@
 package com.caixy.onlineJudge.business.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caixy.onlineJudge.common.cache.redis.annotation.DistributedLock;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
@@ -8,7 +9,10 @@ import com.caixy.onlineJudge.models.dto.user.*;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.enums.redis.RDLockKeyEnum;
 import com.caixy.onlineJudge.models.vo.user.LoginUserVO;
+import com.caixy.onlineJudge.models.vo.user.UserAdminVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
+import com.caixy.serviceclient.service.user.request.UserPageQueryAdminFacadeRequest;
+import com.caixy.serviceclient.service.user.request.UserQueryFacadeRequest;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
 
 import javax.servlet.http.HttpServletRequest;
@@ -98,17 +102,27 @@ public interface UserService extends IService<User>
     Boolean modifyPassword(Long userId, UserModifyPasswordRequest userModifyPasswordRequest);
 
     @DistributedLock(lockKeyEnum = RDLockKeyEnum.USER_LOCK, args = "#email")
-    UserOperatorResponse registerByEmail(String email, String password);
+    UserOperatorResponse preRegisterByEmail(String email, String password);
+
+    UserOperatorResponse activeUserAccount(User userInfo, String nickName, Integer userGender);
 
     UserOperatorResponse doAuthLogin(OAuthResultDTO oAuthResultDTO);
 
     void validUserInfo(User user, boolean isAdd);
 
-    UserVO findByEmail(String email);
+    User findByEmail(String email);
 
-    boolean emailExist(String email);
+    User findByNickName(String nickName);
 
-    boolean nickNameExist(String nickName);
+    boolean emailIsExist(String email);
 
-    UserVO findByEmailAndPass(String email, String password);
+    boolean nickNameIsExist(String nickName);
+
+    User findByEmailAndPass(String email, String password);
+
+    User findById(Long userId);
+
+    User query(UserQueryFacadeRequest userQueryFacadeRequest);
+
+    Page<UserAdminVO> userAdminVOPage(UserPageQueryAdminFacadeRequest pageQueryAdminFacadeRequest);
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 public enum RDLockKeyEnum
 {
     USER_LOCK("user_lock", 10, 10, TimeUnit.SECONDS),
+    CAPTCHA_LOCK("user_captcha_lock", 1, 3, TimeUnit.SECONDS),
 
     ;
     private final String lockName;

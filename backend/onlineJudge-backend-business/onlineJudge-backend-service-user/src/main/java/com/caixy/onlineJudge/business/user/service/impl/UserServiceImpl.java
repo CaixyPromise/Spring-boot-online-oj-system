@@ -3,23 +3,37 @@ package com.caixy.onlineJudge.business.user.service.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.caixy.onlineJudge.common.cache.redis.RedisUtils;
 import com.caixy.onlineJudge.common.cache.redis.annotation.DistributedLock;
+import com.caixy.onlineJudge.common.email.models.active.SendUserActiveDTO;
+import com.caixy.onlineJudge.common.email.mq.EmailSenderRabbitMQProducer;
 import com.caixy.onlineJudge.common.exception.BusinessException;
 
+import com.caixy.onlineJudge.common.objectMapper.ObjectMapperUtil;
 import com.caixy.onlineJudge.common.regex.RegexUtils;
 import com.caixy.onlineJudge.constants.code.ErrorCode;
 import com.caixy.onlineJudge.constants.common.UserConstant;
-import com.caixy.onlineJudge.common.encrypt.EncryptionUtils;
+import com.caixy.onlineJudge.common.encrypt.EncryptUtils;
 import com.caixy.onlineJudge.business.user.service.UserService;
 import com.caixy.onlineJudge.business.user.mapper.UserMapper;
 import com.caixy.onlineJudge.models.convertor.user.UserConvertor;
 import com.caixy.onlineJudge.models.dto.oauth.OAuthResultDTO;
 import com.caixy.onlineJudge.models.dto.user.*;
+import com.caixy.onlineJudge.models.enums.email.EmailSenderCategoryEnum;
 import com.caixy.onlineJudge.models.enums.redis.RDLockKeyEnum;
+import com.caixy.onlineJudge.models.enums.redis.RedisKeyEnum;
+import com.caixy.onlineJudge.models.enums.user.UserStateEnum;
+import com.caixy.onlineJudge.models.vo.user.UserAdminVO;
+import com.caixy.serviceclient.service.user.request.UserPageQueryAdminFacadeRequest;
+import com.caixy.serviceclient.service.user.request.UserQueryFacadeRequest;
+import com.caixy.serviceclient.service.user.request.condition.*;
 import com.caixy.serviceclient.service.user.response.UserOperatorResponse;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
@@ -46,18 +60,22 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService, InitializingBean
 {
-    private static final String DEFAULT_NICK_NAME_PREFIX = "coder_";
 
     private RBloomFilter<String> nickNameBloomFilter;
 
     private RBloomFilter<String> emailBloomFilter;
 
-//    @InjectRedissonClient(clientName = "bloom-filter", name = "bloom-filter")
+    //    @InjectRedissonClient(clientName = "bloom-filter", name = "bloom-filter")
     @Resource
     private RedissonClient redissonClient;
 
     @Resource
+    private EmailSenderRabbitMQProducer<SendUserActiveDTO> emailSenderRabbitMQProducer;
+
+    @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisUtils redisUtils;
 
     /**
      * 获取当前登录用户
@@ -260,14 +278,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 校验密码
         boolean matches =
-                EncryptionUtils.matches(userModifyPasswordRequest.getOldPassword(), currenUser.getUserPassword());
+                EncryptUtils.matches(userModifyPasswordRequest.getOldPassword(), currenUser.getUserPassword());
         if (!matches)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "原密码错误");
         }
 
         // 加密密码
-        String encryptPassword = EncryptionUtils.encodePassword(userPassword);
+        String encryptPassword = EncryptUtils.encodePassword(userPassword);
         currenUser.setUserPassword(encryptPassword);
         // 清空登录状态
         StpUtil.logout();
@@ -276,16 +294,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @DistributedLock(lockKeyEnum = RDLockKeyEnum.USER_LOCK, args = "#email")
     @Override
-    public UserOperatorResponse registerByEmail(String email, String password)
+    public UserOperatorResponse preRegisterByEmail(String email, String password)
     {
-        String defaultNickName;
-        String randomString;
-        do
-        {
-            randomString = RandomUtil.randomString(6).toUpperCase();
-            //前缀 + 6位随机数 + 邮箱前6位
-            defaultNickName = String.format("%s_%s_%s", DEFAULT_NICK_NAME_PREFIX, randomString, email.substring(0, 6));
-        } while (nickNameExist(defaultNickName));
         if (StringUtils.isAnyBlank(password, email))
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -294,39 +304,69 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱或密码格式错误");
         }
-        UserOperatorResponse userOperatorResponse = new UserOperatorResponse();
-
-        User registered = registerUser(email, defaultNickName, password);
-        if (registered != null)
-        {
-            userOperatorResponse.setCode(ErrorCode.SUCCESS.getCode());
-            userOperatorResponse.setMessage(ErrorCode.SUCCESS.getMessage());
-            userOperatorResponse.setData(UserConvertor.INSTANCE.convert(registered));
-            return userOperatorResponse;
-        }
-        userOperatorResponse.setCode(ErrorCode.OPERATION_ERROR.getCode());
-        userOperatorResponse.setMessage(ErrorCode.OPERATION_ERROR.getMessage());
-        return userOperatorResponse;
-    }
-
-    private User registerUser(String email, String nickName, String password)
-    {
-        if (emailExist(email))
+        // 预注册用户信息
+        if (emailIsExist(email))
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱已注册");
         }
-        User user = User.registerUserByEmail(nickName, email, EncryptionUtils.encodePassword(password));
-        boolean result = this.save(user);
-        if (!result)
+        // todo: 增加已经预注册的邮箱不允许重复预注册
+        User user = User.preRegister(email, EncryptUtils.encodePassword(password));
+        Map<String, Object> convertedMap = ObjectMapperUtil.convertValue(user,
+                TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class));
+
+        SendUserActiveDTO userActiveDTO = new SendUserActiveDTO();
+        String token = DigestUtil.md5Hex(user.getUserEmail() +
+                                         user.getCreateTime() +
+                                         RandomUtil.randomNumbers(6) +
+                                         System.currentTimeMillis());
+        userActiveDTO.setToken(token);
+        emailSenderRabbitMQProducer.sendEmail(email, userActiveDTO, EmailSenderCategoryEnum.ACTIVE_USER);
+        // 账号数据写入缓存
+        redisUtils.setHashMap(RedisKeyEnum.ACTIVE_USER, convertedMap, token);
+        // 返回
+        return UserOperatorResponse.success(null);
+    }
+
+    /**
+     * 激活用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/6 上午1:25
+     */
+    @DistributedLock(lockKeyEnum = RDLockKeyEnum.USER_LOCK, args = "#email")
+    @Override
+    public UserOperatorResponse activeUserAccount(User userInfo, String nickName, Integer userGender)
+    {
+        String email = userInfo.getUserEmail();
+
+        // 检查有没有重复激活
+        if (emailIsExist(email))
         {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "注册失败");
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "账号已激活");
+        }
+        if (nickNameIsExist(nickName))
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "昵称已存在");
+        }
+//        ThrowUtils.throwIf(nickNameIsExist(nickName), ErrorCode.PARAMS_ERROR, "昵称已存在");
+
+        // 设置用户状态
+        userInfo.setIsActive(UserStateEnum.ACTIVE.getCode());
+        userInfo.setNickName(nickName);
+        userInfo.setUserGender(userGender);
+        userInfo.setUserRole(UserRoleEnum.USER.getValue());
+        // 保存用户信息
+        boolean saved = this.save(userInfo);
+        if (!saved)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "激活失败");
         }
         // 更新过滤器
         addNickName(nickName);
         addEmail(email);
-        return user;
+        return UserOperatorResponse.success(null);
     }
-
 
     @Override
     public UserOperatorResponse doAuthLogin(OAuthResultDTO resultResponse)
@@ -389,10 +429,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @since 2024/8/31 下午3:59
      */
     @Override
-    public UserVO findByEmail(String email)
+    public User findByEmail(String email)
     {
-        return UserConvertor.INSTANCE.convert(userMapper.findByEmail(email));
+        return userMapper.findByEmail(email);
     }
+
+    /**
+     * 根据用户名查找用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/6 上午1:55
+     */
+    @Override
+    public User findByNickName(String nickName)
+    {
+        return userMapper.findByNickname(nickName);
+    }
+
 
     /**
      * 根据邮箱判断用户是否存在
@@ -402,7 +456,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @since 2024/8/31 下午2:45
      */
     @Override
-    public boolean emailExist(String email)
+    public boolean emailIsExist(String email)
     {
         //如果布隆过滤器中存在，再进行数据库二次判断
         if (this.emailBloomFilter != null && this.emailBloomFilter.contains(email))
@@ -420,7 +474,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @since 2024/8/31 下午2:45
      */
     @Override
-    public boolean nickNameExist(String nickName)
+    public boolean nickNameIsExist(String nickName)
     {
         //如果布隆过滤器中存在，再进行数据库二次判断
         if (this.nickNameBloomFilter != null && this.nickNameBloomFilter.contains(nickName))
@@ -431,14 +485,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserVO findByEmailAndPass(String email, String password)
+    public User findByEmailAndPass(String email, String password)
     {
         User byEmail = userMapper.findByEmail(email);
-        if (byEmail != null && EncryptionUtils.matches(password, byEmail.getUserPassword()))
+        if (byEmail != null && EncryptUtils.matches(password, byEmail.getUserPassword()))
         {
-            return UserConvertor.INSTANCE.convert(byEmail);
+            return byEmail;
         }
         return null;
+    }
+
+    @Override
+    public User findById(Long userId)
+    {
+        return userMapper.findById(userId);
     }
 
     private boolean addNickName(String nickName)
@@ -464,5 +524,70 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         {
             this.emailBloomFilter.tryInit(100000L, 0.01);
         }
+    }
+
+    /**
+     * 查询用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/10 上午2:59
+     */
+    @Override
+    public User query(UserQueryFacadeRequest userQueryFacadeRequest)
+    {
+        User user = null;
+        UserQueryCondition condition = userQueryFacadeRequest.getUserQueryCondition();
+        if (condition instanceof UserIdQueryCondition)
+        {
+            UserIdQueryCondition userIdQueryCondition = (UserIdQueryCondition) condition;
+            user = findById(userIdQueryCondition.getUserId());
+        }
+        else if (condition instanceof UserEmailAndPassQueryCondition)
+        {
+            UserEmailAndPassQueryCondition userPhoneQueryCondition = (UserEmailAndPassQueryCondition) condition;
+            user = findByEmail(userPhoneQueryCondition.getEmail());
+        }
+        else if (condition instanceof UserNickNameQueryCondition)
+        {
+            UserNickNameQueryCondition userPhoneQueryCondition = (UserNickNameQueryCondition) condition;
+            user = findByNickName(userPhoneQueryCondition.getNickName());
+        }
+        else
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "不允许的请求类型");
+        }
+        return user;
+    }
+
+    /**
+     * 远程调用给管理员进行用户分页
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/10 上午3:16
+     */
+    @Override
+    public Page<UserAdminVO> userAdminVOPage(UserPageQueryAdminFacadeRequest pageQueryAdminFacadeRequest)
+    {
+        Page<User> userPage = new Page<>(pageQueryAdminFacadeRequest.getCurrent(),
+                pageQueryAdminFacadeRequest.getPageSize());
+        Page<User> page = this.page(userPage);
+        Page<UserAdminVO> userAdminVOPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        if (userPage.getTotal() == 0)
+        {
+            userAdminVOPage.setRecords(Collections.emptyList());
+        }
+        else
+        {
+            UserConvertor userConvertor = UserConvertor.INSTANCE;
+            userAdminVOPage.setRecords(page.getRecords().stream().map(user ->
+            {
+                UserAdminVO userAdminVO = new UserAdminVO();
+                userConvertor.convertToAdmin(user);
+                return userAdminVO;
+            }).collect(Collectors.toList()));
+        }
+        return userAdminVOPage;
     }
 }

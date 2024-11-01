@@ -17,7 +17,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
         scanBasePackages = {
                 "com.caixy.onlineJudge.business.captcha",
                 "com.caixy.onlineJudge.common",
-                "com.caixy.onlineJudge.web"
+                "com.caixy.onlineJudge.web",
+                "com.caixy.onlineJudge.rabbitmq",
         },
         exclude = {DataSourceAutoConfiguration.class})
 @EnableDubbo

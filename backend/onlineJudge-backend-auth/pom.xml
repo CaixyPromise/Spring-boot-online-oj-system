@@ -35,6 +35,11 @@
         </dependency>
         <dependency>
             <groupId>com.caixy</groupId>
+            <artifactId>onlineJudge-backend-encrypt</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.caixy</groupId>
             <artifactId>onlineJudge-backend-sa-token</artifactId>
         </dependency>
 

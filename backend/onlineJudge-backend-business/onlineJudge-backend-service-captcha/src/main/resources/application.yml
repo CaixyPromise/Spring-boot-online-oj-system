@@ -27,8 +27,8 @@ rabbitmq:
       durable: true
       autoDelete: false
       bindings:
-        - queue: emailCaptchaQueue
-          routingKey: email.captcha
+        - queue: emailQueue
+          routingKey: email.active
           deadLetterRoutingKey: dl.email.captcha
           deadLetterQueue: X-DeadLetter-Email-Captcha-Queue
           durable: true

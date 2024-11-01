@@ -15,7 +15,7 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   config:
-    import: classpath:rpc.yml,classpath:cache.yml,classpath:datasource.yml
+    import: classpath:rpc.yml,classpath:cache.yml,classpath:datasource.yml,classpath:email.yml,classpath:rabbitmq.yml
 
 knife4j:
   enable: true
@@ -35,3 +35,18 @@ redis-session:
       port: 6379
       database: 5
       timeout: 5000
+
+rabbitmq:
+  exchanges:
+    - name: emailExchange
+      type: direct
+      durable: true
+      autoDelete: false
+      bindings:
+        - queue: emailQueue
+          routingKey: email.active
+          deadLetterRoutingKey: dl.email.captcha
+          deadLetterQueue: X-DeadLetter-Email-Captcha-Queue
+          durable: true
+          autoDelete: false
+          exclusive: false

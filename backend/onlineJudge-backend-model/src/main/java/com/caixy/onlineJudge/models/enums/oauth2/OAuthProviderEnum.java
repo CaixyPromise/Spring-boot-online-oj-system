@@ -1,13 +1,8 @@
 package com.caixy.onlineJudge.models.enums.oauth2;
 
-import com.caixy.onlineJudge.models.dto.oauth.github.GithubCallbackRequest;
-import com.caixy.onlineJudge.models.dto.oauth.github.GithubCallbackResponse;
-import com.caixy.onlineJudge.models.dto.oauth.github.GithubGetAuthorizationUrlRequest;
 import com.caixy.onlineJudge.models.dto.oauth.github.GithubUserProfileDTO;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 /**

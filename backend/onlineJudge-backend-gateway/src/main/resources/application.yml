@@ -28,13 +28,28 @@ spring:
             - Path=/api/captcha/**
           filters:
             - AddRequestHeader=X-Forwarded-By, Service-Gateway
+        - id: onlineJudge-backend-service-admin
+          uri: lb://onlineJudge-backend-service-admin
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - AddRequestHeader=X-Forwarded-By, Service-Gateway
+        - id: onlineJudge-backend-service-question
+          uri: lb://onlineJudge-backend-service-question
+          predicates:
+            - Path=/api/question/**
+          filters:
+            - AddRequestHeader=X-Forwarded-By, Service-Gateway
+        - id: onlineJudge-backend-service-judge
+          uri: lb://onlineJudge-backend-service-judge
+          predicates:
+            - Path=/api/judge/**
   application:
     name: @application.name@
   config:
-    import: classpath:rpc.yml,classpath:config.yml
+    import: classpath:rpc.yml,classpath:config.yml,classpath:cache.yml
   main:
     web-application-type: reactive
-    allow-bean-definition-overriding: true
   profiles:
     active: dev
 server:
@@ -55,8 +70,10 @@ knife4j:
         - .*?dubbo.*
 logging:
   level:
-    org.springframework.cloud.gateway: debug
-    org.springframework.http.server.reactive: debug
-    org.springframework.web.reactive: debug
-#    reactor.netty: debug
-    com.github.xiaoymin.knife4j: debug
+    org.springframework.cloud.gateway: debug  # 打印网关相关的详细信息
+    org.springframework.http.server.reactive: debug  # 打印HTTP请求处理的详细信息
+    org.springframework.web.reactive: debug  # 打印WebFlux的详细信息
+    reactor.netty: debug  # 打印Netty的详细信息
+    cn.dev33.satoken: debug  # 打印sa-token相关的日志
+    com.github.xiaoymin.knife4j: debug  # 打印Knife4j的调试日志
+    root: debug

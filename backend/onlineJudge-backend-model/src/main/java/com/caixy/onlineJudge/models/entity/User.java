@@ -1,9 +1,6 @@
 package com.caixy.onlineJudge.models.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.core.toolkit.EncryptUtils;
 import com.caixy.onlineJudge.models.enums.user.UserGenderEnum;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
@@ -102,24 +99,18 @@ public class User implements Serializable
     /**
      * 是否删除
      */
+    @TableLogic
     private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
-    public static User registerUserByEmail(
-            String nickName,
-            String userEmail,
-            String userPassword)
+    public static User preRegister(String userEmail, String userPassword)
     {
         return User.builder()
-                .nickName(nickName)
                 .userEmail(userEmail)
                 .userPassword(userPassword)
-                .userGender(UserGenderEnum.UNKNOWN.getValue())
-                .userRole(UserRoleEnum.USER.getValue())
-                .isActive(UserStateEnum.ACTIVE.getCode())
-                .isDelete(0)
+                .createTime(new Date())
                 .build();
     }
 }

@@ -19,9 +19,24 @@ import java.util.concurrent.TimeUnit;
 @Getter
 public enum RedisLimiterEnum
 {
+    /**
+     * 登录接口限流，每秒最多1次请求
+     */
     LOGIN("login:rate-limiter", 1, 1, TimeUnit.SECONDS),  // 每秒最多1次请求
-    CAPTCHA("captcha-rate-limiter", 3, 1, TimeUnit.SECONDS),  // 每秒最多3次请求
-    REGISTER("register-rate-limiter", 1, 1, TimeUnit.SECONDS); // 每秒最多1次请求
+    /**
+     * 验证码接口限流，单用户每秒最多3次请求，
+     */
+    CAPTCHA("captcha-rate-limiter", 3, 1, TimeUnit.SECONDS),
+    /**
+     * 注册接口限流，每秒最多1次请求
+     */
+    REGISTER("register-rate-limiter", 1, 1, TimeUnit.SECONDS),
+
+    /**
+     * 预注册获取临时token限流，每30分钟最多1次
+     */
+    REGISTER_TEMP_TOKEN("register-temp-token-rate-limiter", 1, 30, TimeUnit.MINUTES),
+
     ;
 
     /**

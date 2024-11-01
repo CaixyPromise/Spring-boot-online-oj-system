@@ -138,7 +138,7 @@ public class RedisUtils
         if (StringUtils.isNotBlank(cacheData))
         {
             // 把字符串转义全部清楚掉
-            return JsonUtils.jsonToList(cacheData);
+            return JsonUtils.toList(cacheData);
         }
         // 直接返回空指针，不返回空列表
         return null;
@@ -163,7 +163,7 @@ public class RedisUtils
      */
     public void setObject(RedisKeyEnum keyEnum, Object value, String... keyItems)
     {
-        setString(keyEnum, JsonUtils.toJsonString(value), keyItems);
+        setString(keyEnum, JsonUtils.toJson(value), keyItems);
     }
 
     /**
@@ -254,7 +254,7 @@ public class RedisUtils
     {
         HashMap<String, String> stringData = new HashMap<>();
         data.forEach((dataKey, value) ->
-                stringData.put(dataKey, JsonUtils.toJsonString(value)));
+                stringData.put(dataKey, JsonUtils.toJson(value)));
         stringRedisTemplate.opsForHash().putAll(key, stringData);
         if (expire != null)
         {

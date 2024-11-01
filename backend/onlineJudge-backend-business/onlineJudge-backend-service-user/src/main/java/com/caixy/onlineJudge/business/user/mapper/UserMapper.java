@@ -12,9 +12,33 @@ import com.caixy.onlineJudge.models.entity.User;
  */
 public interface UserMapper extends BaseMapper<User>
 {
+    /**
+     * 根据用户名查找用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/5 下午11:25
+     */
     User findByNickname(String nickname);
 
+    /**
+     * 根据邮箱查找用户数据
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/5 下午11:25
+     */
     User findByEmail(String userEmail);
+
+
+    /**
+     * 根据Id查找用户数据
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/9/5 下午11:25
+     */
+    User findById(Long userId);
 }
 
 

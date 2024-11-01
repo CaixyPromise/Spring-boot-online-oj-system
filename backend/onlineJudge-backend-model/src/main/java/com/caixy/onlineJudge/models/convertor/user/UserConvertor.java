@@ -5,6 +5,8 @@ import com.caixy.onlineJudge.models.convertor.BaseConvertor;
 import com.caixy.onlineJudge.models.entity.User;
 import com.caixy.onlineJudge.models.enums.user.UserRoleEnum;
 import com.caixy.onlineJudge.models.enums.user.UserStateEnum;
+import com.caixy.onlineJudge.models.vo.user.AboutMeVO;
+import com.caixy.onlineJudge.models.vo.user.UserAdminVO;
 import com.caixy.onlineJudge.models.vo.user.UserVO;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
@@ -57,6 +59,14 @@ public interface UserConvertor extends BaseConvertor<User>
     @Mapping(source = "userRole", target = "userRole", qualifiedByName = "roleStringToEnum")
     @Mapping(source = "isActive", target = "userActive", qualifiedByName = "activeStringToEnum")
     UserVO convert(User userInfo);
+
+    @Mapping(source = "userRole", target = "userRole", qualifiedByName = "roleStringToEnum")
+    @Mapping(source = "isActive", target = "userActive", qualifiedByName = "activeStringToEnum")
+    UserAdminVO convertToAdmin(User userInfo);
+
+    @Mapping(source = "userRole", target = "userRole", qualifiedByName = "roleStringToEnum")
+    @Mapping(source = "isActive", target = "userActive", qualifiedByName = "activeStringToEnum")
+    AboutMeVO convertToAboutMe(User userInfo);
 
     @Named("roleStringToEnum")
     default UserRoleEnum mapRole(String role)

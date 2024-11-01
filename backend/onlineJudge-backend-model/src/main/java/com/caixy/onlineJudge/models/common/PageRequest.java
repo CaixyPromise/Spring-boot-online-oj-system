@@ -1,6 +1,6 @@
 package com.caixy.onlineJudge.models.common;
 
-import com.caixy.onlineJudge.constants.common.CommonConstants;
+import com.caixy.onlineJudge.constants.common.CommonConstant;
 import lombok.Data;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class PageRequest
     /**
      * 排序顺序（默认升序）
      */
-    private String sortOrder = CommonConstants.SORT_ORDER_ASC;
+    private String sortOrder = CommonConstant.SORT_ORDER_ASC;
 
     /**
      * searchAfter 参数，用于ES深度分页
